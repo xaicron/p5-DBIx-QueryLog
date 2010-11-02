@@ -2,9 +2,11 @@ use inc::Module::Install;
 name 'DBIx-QueryLog';
 all_from 'lib/DBIx/QueryLog.pm';
 
-#requires '';
+requires 'DBI';
+requires 'Data::Dump';
+recommends 'DBD::mysql';
+recommends 'DBD::sqlite';
 
-#build_requires '';
 test_requires 'Test::More', 0.96;
 
 tests join q{ }, map { sprintf 't%s.t', '/*' x $_ } 1..3;
