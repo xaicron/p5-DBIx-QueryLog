@@ -30,6 +30,9 @@ all_pod_files_spelling_ok('lib');
 
 __DATA__
 DBIx::QueryLog
+DBI
+SQL
+params
 
 # personal section
 xaicron
