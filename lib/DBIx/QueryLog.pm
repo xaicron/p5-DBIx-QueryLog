@@ -17,10 +17,9 @@ our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
 
-my $mysql_pattern   = qr/Binding parameters: /;
-my $sqlite_pattern  = qr/sqlite trace: executing /;
-my $sqlite_pattern2 = qr/ at dbdimp\.c line \d+/;
-our $PATTERN = qr/(?:^$mysql_pattern | $sqlite_pattern) | (?:$sqlite_pattern2$)/x;
+my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
+my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
+our $PATTERN = qr/$mysql_pattern | $sqlite_pattern/x;
 
 sub import {
     my ($class) = @_;
@@ -126,7 +125,8 @@ sub OPEN {
 sub WRITE {
     my ($self, $buf, $fh) = @_;
 
-    if ($buf && $buf =~ s/$PATTERN//og) {
+    if ($buf && $buf =~ /$PATTERN/o) {
+        $buf = $+;
         $buf =~ s/\n$//;
         $$$self = $buf; # SQL
     }
