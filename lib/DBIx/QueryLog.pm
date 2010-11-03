@@ -98,17 +98,16 @@ for my $accessor (qw/logger threshold probability skip_bind/) {
 }
 
 sub _caller {
-    return do {
-        my $i = 0;
-        my $caller = { pkg => '???', line => '???', file => '???' };
-        while (my @c = caller(++$i)) {
-            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
-                $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
-                last;
-            }
+    my $i = 0;
+    my $caller = { pkg => '???', line => '???', file => '???' };
+    while (my @c = caller(++$i)) {
+        if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+            $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
+            last;
         }
-        $caller;
-    };
+    }
+
+    return $caller;
 }
 
 package PerlIO::via::DBIx::QueryLogLayer;
