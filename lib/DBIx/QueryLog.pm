@@ -42,8 +42,16 @@ sub import {
             $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
         }
         else {
-            open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-            $sth->trace('3', $tfh);
+            my $dbh = $sth->{Database};
+            if ($dbh->{Driver}{Name} eq 'mysql') {
+                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
+                $sth->trace('3', $tfh);
+            }
+            else {
+                $ret = $sth->{Statement};
+                my $i;
+                $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
+            }
         }
 
         my $begin = [gettimeofday];
