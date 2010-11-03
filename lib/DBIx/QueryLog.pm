@@ -16,6 +16,7 @@ my $org_execute = \&DBI::st::execute;
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
+our $LOG_LEVEL = 'debug';
 
 my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
 my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
@@ -68,7 +69,7 @@ sub import {
                 my $logger = $class->logger;
                 if ($logger) {
                     $logger->log(
-                        level   => 'debug',
+                        level   => $LOG_LEVEL,
                         message => $message,
                         time    => $time,
                         %$ret,
