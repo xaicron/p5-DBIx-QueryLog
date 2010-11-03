@@ -71,8 +71,11 @@ sub import {
                     $logger->log(
                         level   => $LOG_LEVEL,
                         message => $message,
-                        time    => $time,
-                        %$ret,
+                        params  => {
+                            time => $time,
+                            sql  => $ret,
+                            %$caller,
+                        }
                     );
                 }
                 else {
