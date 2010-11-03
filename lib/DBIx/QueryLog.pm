@@ -46,7 +46,7 @@ sub import {
             my $dbh = $sth->{Database};
             if ($dbh->{Driver}{Name} eq 'mysql') {
                 open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $sth->trace('3', $tfh);
+                $sth->trace('2|SQL', $tfh);
             }
             else {
                 $ret = $sth->{Statement};
