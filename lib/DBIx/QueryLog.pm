@@ -14,10 +14,13 @@ our $VERSION = '0.01';
 my $org_execute = \&DBI::st::execute;
 
 our %SKIP_PKG_MAP = (
-    'DBIx::QueryLog'             => 1,
-    'QueryLogLayer'              => 1,
-    'PerlIO::via::QueryLogLayer' => 1,
+    'DBIx::QueryLog' => 1,
 );
+
+my $mysql_pattern   = qr/Binding parameters: /;
+my $sqlite_pattern  = qr/sqlite trace: executing /;
+my $sqlite_pattern2 = qr/ at dbdimp\.c line \d+/;
+our $PATTERN = qr/(?:^$mysql_pattern | $sqlite_pattern) | (?:$sqlite_pattern2$)/x;
 
 sub import {
     my ($class) = @_;
@@ -40,7 +43,7 @@ sub import {
             $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
         }
         else {
-            open $tfh, '>:via(DBIx::QueryLogLayer)', DBIx::QueryLogLayer->new(\$ret);
+            open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
             $sth->trace('3', $tfh);
         }
 
@@ -99,7 +102,7 @@ sub _caller {
         my $i = 0;
         my $caller = { pkg => '???', line => '???', file => '???' };
         while (my @c = caller(++$i)) {
-            if (!$DBIx::QueryLog::SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
                 $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
                 last;
             }
@@ -108,41 +111,11 @@ sub _caller {
     };
 }
 
-package DBIx::QueryLogLayer;
-
-my $mysql_pattern   = qr/Binding parameters: /;
-my $sqlite_pattern  = qr/sqlite trace: executing /;
-my $sqlite_pattern2 = qr/ at dbdimp\.c line \d+/;
-our $PATTERN = qr/(?:^$mysql_pattern | $sqlite_pattern) | (?:$sqlite_pattern2$)/x;
-
-sub new {
-    my ($class, $ret) = @_;
-    return bless { buff => '', ret => $ret }, $class;
-}
-
-sub log {
-    my $self = shift;
-    $self->{buff} = shift;
-
-    if ($self->{buff} && $self->{buff} =~ s/$PATTERN//og) {
-        $self->{buff} =~ s/\n$//;
-        ${$self->{ret}} = $self->{buff}; # SQL
-    }
-
-    $self->{buff} = '';
-}
-
-sub close {
-    my ($self) = @_;
-    delete $self->{buff};
-}
-
 package PerlIO::via::DBIx::QueryLogLayer;
 
 sub PUSHED {
     my ($class, $mode, $fh) = @_;
-    my $logger;
-    bless \$logger, $class;
+    bless \my($logger), $class;
 }
 
 sub OPEN {
@@ -153,13 +126,18 @@ sub OPEN {
 
 sub WRITE {
     my ($self, $buf, $fh) = @_;
-    $$self->log($buf);
-    return length $buf;
+
+    if ($buf && $buf =~ s/$PATTERN//og) {
+        $buf =~ s/\n$//;
+        $$$self = $buf; # SQL
+    }
+
+    return 1;
 }
 
 sub CLOSE {
-    my ($self) = @_;
-    $$self->close;
+    my $self = shift;
+    undef $$self;
     return 0;
 }
 
