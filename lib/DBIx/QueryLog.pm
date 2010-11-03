@@ -170,15 +170,15 @@ Currently, works on DBD::mysql and DBD::sqlite.
 
 =item threshold
 
-if exceed this value for logs. (default not set)
+If exceed this value for logs. (default not set)
 
 =item probability
 
-run once every "set value" times. (default not set)
+Run once every "set value" times. (default not set)
 
 =item logger
 
-set logger class (e.g. Log::Dispach)
+Sets logger class (e.g. Log::Dispach)
 
 =item skip_bind
 
@@ -197,7 +197,7 @@ The statement and bind-params are logs separately.
 
 =head2 Localization
 
-if you want to localize the scope are:
+If you want to localize the scope are:
 
   use DBIx::QueryLog (); # or require DBIx::QueryLog;
 
