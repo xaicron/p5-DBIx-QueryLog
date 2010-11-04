@@ -183,13 +183,21 @@ Currently, works on DBD::mysql and DBD::sqlite.
 
 If exceed this value for logs. (default not set)
 
+  DBIx::QueryLog->threshold(0.1); # sec
+
 =item probability
 
 Run once every "set value" times. (default not set)
 
+  DBIx::QueryLog->probability(100); # about 1/100
+
 =item logger
 
-Sets logger class (e.g. Log::Dispach)
+Sets logger class (e.g. L<Log::Dispach>)
+
+Logger class must can be call `log` method.
+
+  DBIx::QueryLog->logger($logger);
 
 =item skip_bind
 
