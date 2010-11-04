@@ -18,10 +18,6 @@ our %SKIP_PKG_MAP = (
 );
 our $LOG_LEVEL = 'debug';
 
-my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
-#my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
-our $PATTERN = qr/$mysql_pattern/x;
-
 sub import {
     my ($class) = @_;
 
@@ -123,6 +119,10 @@ sub _caller {
 
 package PerlIO::via::DBIx::QueryLogLayer;
 
+my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
+#my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
+my $regex = qr/$mysql_pattern/x;
+
 sub PUSHED {
     my ($class, $mode, $fh) = @_;
     bless \my($logger), $class;
@@ -137,7 +137,7 @@ sub OPEN {
 sub WRITE {
     my ($self, $buf, $fh) = @_;
 
-    if ($buf && $buf =~ /$PATTERN/o) {
+    if ($buf && $buf =~ /$regex/o) {
         $buf = $+;
         $buf =~ s/\n$//;
         $$$self = $buf; # SQL
