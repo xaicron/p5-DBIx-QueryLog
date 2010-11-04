@@ -210,6 +210,14 @@ The statement and bind-params are logs separately.
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
 
+=item begin
+
+SEE ALSO L<Localization>
+
+=item end
+
+SEE ALSO L<Localization>
+
 =back
 
 =head1 TIPS
