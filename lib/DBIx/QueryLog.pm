@@ -19,8 +19,8 @@ our %SKIP_PKG_MAP = (
 our $LOG_LEVEL = 'debug';
 
 my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
-my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
-our $PATTERN = qr/$mysql_pattern | $sqlite_pattern/x;
+#my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
+our $PATTERN = qr/$mysql_pattern/x;
 
 sub import {
     my ($class) = @_;
