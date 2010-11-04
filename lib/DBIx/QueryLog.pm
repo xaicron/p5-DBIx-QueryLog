@@ -57,10 +57,10 @@ sub import {
 
         my $begin = [gettimeofday];
         my $res = $wantarray ? [$org_execute->($sth, @_)] : scalar $org_execute->($sth, @_);
+        my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
         if (length $ret) {
             my $threshold = $class->threshold;
-            my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
             if (!$threshold || $time > $threshold) {
                 my $caller = $class->_caller();
                 my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
