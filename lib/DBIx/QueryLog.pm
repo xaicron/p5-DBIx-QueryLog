@@ -12,82 +12,30 @@ use POSIX qw(strftime);
 our $VERSION = '0.01';
 
 my $org_execute = \&DBI::st::execute;
+my $org_mysql_xs_do = eval { require DBD::mysql; 1 } ? \&DBD::mysql::db::do : undef;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
 our $LOG_LEVEL = 'debug';
 
+my $st_execute;
+my $mysql_xs_do;
+
 sub import {
     my ($class) = @_;
+    $st_execute  ||= $class->_st_execute();
+    $mysql_xs_do ||= $class->_mysql_xs_do() if $org_mysql_xs_do;
 
-    no warnings 'redefine';
-    *DBI::st::execute = sub {
-        use warnings 'redefine';
-
-        my $wantarray = wantarray ? 1 : 0;
-        my $sth = shift;
-
-        my $probability = $class->probability;
-        if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org_execute->($sth, @_);
-        }
-
-        my ($ret, $tfh);
-        if ($class->skip_bind) {
-            $ret  = $sth->{Statement};
-            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
-        }
-        else {
-            my $dbh = $sth->{Database};
-            if ($dbh->{Driver}{Name} eq 'mysql') {
-                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $sth->trace('2|SQL', $tfh);
-            }
-            else {
-                $ret = $sth->{Statement};
-                my $i;
-                $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
-            }
-        }
-
-        my $begin = [gettimeofday];
-        my $res = $wantarray ? [$org_execute->($sth, @_)] : scalar $org_execute->($sth, @_);
-        my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
-
-        if (length $ret) {
-            my $threshold = $class->threshold;
-            if (!$threshold || $time > $threshold) {
-                my $caller = $class->_caller();
-                my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-                    strftime("%FT%T", localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
-
-                my $logger = $class->logger;
-                if ($logger) {
-                    $logger->log(
-                        level   => $LOG_LEVEL,
-                        message => $message,
-                        params  => {
-                            time => $time,
-                            sql  => $ret,
-                            %$caller,
-                        }
-                    );
-                }
-                else {
-                    print STDERR $message;
-                }
-            }
-        }
-
-        close $tfh if $tfh;
-        return $wantarray ? @$res : $res;
-    };
+    no warnings qw(redefine prototype);
+    *DBI::st::execute   = $st_execute;
+    *DBD::mysql::db::do = $mysql_xs_do if $org_mysql_xs_do;
 }
 
 sub unimport {
-    no warnings 'redefine';
+    no warnings qw(redefine prototype);
     *DBI::st::execute = $org_execute;
+    *DBD::mysql::db::do = $org_mysql_xs_do if $org_mysql_xs_do;
 }
 
 *begin = \&import;
@@ -102,6 +50,107 @@ for my $accessor (qw/logger threshold probability skip_bind/) {
         return $container->{$accessor} unless $args;
         $container->{$accessor} = $args;
     };
+}
+
+sub _st_execute {
+    my ($class) = @_;
+    
+    return sub {
+        my $wantarray = wantarray ? 1 : 0;
+        my $sth = shift;
+
+        my $probability = $class->probability;
+        if ($probability && int(rand() * $probability) % $probability != 0) {
+            return $org_execute->($sth, @_);
+        }
+
+        my $tfh;
+        my $ret = $sth->{Statement};
+        if ($class->skip_bind) {
+            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
+        }
+        else {
+            my $dbh = $sth->{Database};
+            if ($dbh->{Driver}{Name} eq 'mysql') {
+                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
+                $sth->trace('2|SQL', $tfh);
+            }
+            else {
+                my $i;
+                $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
+            }
+        }
+
+        my $begin = [gettimeofday];
+        my $res = $wantarray ? [$org_execute->($sth, @_)] : scalar $org_execute->($sth, @_);
+        my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
+
+        $class->_logging($ret, $time);
+
+        close $tfh if $tfh;
+        return $wantarray ? @$res : $res;
+    };
+}
+
+sub _mysql_xs_do {
+    my ($class) = @_;
+
+    return sub {
+        my $wantarray = wantarray ? 1 : 0;
+        my $dbh  = shift;
+        my $stmt = shift;
+
+        my $probability = $class->probability;
+        if ($probability && int(rand() * $probability) % $probability != 0) {
+            return $org_mysql_xs_do->($dbh, $stmt, @_);
+        }
+
+        my $tfh;
+        my $ret = $stmt;
+        if ($class->skip_bind) {
+            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
+        }
+        else {
+            open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
+            $dbh->trace('2|SQL', $tfh);
+        }
+
+        my $begin = [gettimeofday];
+        my $res = $wantarray ? [$org_mysql_xs_do->($dbh, $stmt, @_)] : scalar $org_mysql_xs_do->($dbh, $stmt, @_);
+        my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
+
+        $class->_logging($ret, $time);
+
+        close $tfh if $tfh;
+        return $wantarray ? @$res : $res;
+    };
+}
+
+sub _logging {
+    my ($class, $ret, $time) = @_;
+
+    my $threshold = $class->threshold;
+    if (!$threshold || $time > $threshold) {
+        my $caller = $class->_caller();
+        my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
+            strftime("%FT%T", localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
+
+        my $logger = $class->logger;
+        if ($logger) {
+            $logger->log(
+                level   => $LOG_LEVEL,
+                message => $message,
+                params  => {
+                    time => $time,
+                    sql  => $ret,
+                    %$caller,
+                }
+            );
+        }
+        else {
+            print STDERR $message;
+        }
+    }
 }
 
 sub _caller {
