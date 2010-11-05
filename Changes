@@ -1,4 +1,7 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.02  Sat Nov  6 02:08:15 2010
+    - remove POSIX::strftime (for unsupported System)
+
 0.01  Wed Nov  3 04:03:24 2010
     - original version
