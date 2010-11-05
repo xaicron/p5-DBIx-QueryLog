@@ -12,7 +12,8 @@ use POSIX qw(strftime);
 our $VERSION = '0.01';
 
 my $org_execute = \&DBI::st::execute;
-my $org_mysql_xs_do = eval { require DBD::mysql; 1 } ? \&DBD::mysql::db::do : undef;
+my $org_db_do   = \&DBI::db::do;
+my $has_mysql   = eval { require DBD::mysql; 1 } ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
@@ -20,22 +21,22 @@ our %SKIP_PKG_MAP = (
 our $LOG_LEVEL = 'debug';
 
 my $st_execute;
-my $mysql_xs_do;
+my $db_do;
 
 sub import {
     my ($class) = @_;
     $st_execute  ||= $class->_st_execute();
-    $mysql_xs_do ||= $class->_mysql_xs_do() if $org_mysql_xs_do;
+    $db_do ||= $class->_db_do() if $has_mysql;
 
     no warnings qw(redefine prototype);
-    *DBI::st::execute   = $st_execute;
-    *DBD::mysql::db::do = $mysql_xs_do if $org_mysql_xs_do;
+    *DBI::st::execute = $st_execute;
+    *DBI::db::do = $db_do if $has_mysql;
 }
 
 sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute = $org_execute;
-    *DBD::mysql::db::do = $org_mysql_xs_do if $org_mysql_xs_do;
+    *DBD::db::do = $org_db_do if $has_mysql;
 }
 
 *begin = \&import;
@@ -92,7 +93,7 @@ sub _st_execute {
     };
 }
 
-sub _mysql_xs_do {
+sub _db_do {
     my ($class) = @_;
 
     return sub {
@@ -100,15 +101,19 @@ sub _mysql_xs_do {
         my $dbh  = shift;
         my $stmt = shift;
 
+        if ($dbh->{Driver}{Name} ne 'mysql') {
+            return $org_db_do->($dbh, $stmt, @_); 
+        }
+
         my $probability = $class->probability;
         if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org_mysql_xs_do->($dbh, $stmt, @_);
+            return $org_db_do->($dbh, $stmt, @_);
         }
 
         my $tfh;
         my $ret = $stmt;
         if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
+            $ret .= ' : ' . Data::Dump::dump([ @_[1..$#_] ]) if @_ > 1;
         }
         else {
             open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
@@ -116,7 +121,7 @@ sub _mysql_xs_do {
         }
 
         my $begin = [gettimeofday];
-        my $res = $wantarray ? [$org_mysql_xs_do->($dbh, $stmt, @_)] : scalar $org_mysql_xs_do->($dbh, $stmt, @_);
+        my $res = $wantarray ? [$org_db_do->($dbh, $stmt, @_)] : scalar $org_db_do->($dbh, $stmt, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
         $class->_logging($ret, $time);
@@ -169,7 +174,6 @@ sub _caller {
 package PerlIO::via::DBIx::QueryLogLayer;
 
 my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
-#my $sqlite_pattern = qr/^sqlite trace: executing (.*) at dbdimp\.c line \d+$/;
 my $regex = qr/$mysql_pattern/x;
 
 sub PUSHED {
@@ -186,10 +190,14 @@ sub OPEN {
 sub WRITE {
     my ($self, $buf, $fh) = @_;
 
-    if ($buf && $buf =~ /$regex/o) {
-        $buf = $+;
-        $buf =~ s/\n$//;
-        $$$self = $buf; # SQL
+    return 0 unless $buf;
+
+    for my $line (split /\n+/, $buf) {
+        if ($buf =~ /$regex/o) {
+            $buf = $1;
+            $buf =~ s/\n$//;
+            $$$self = $buf; # SQL
+        }
     }
 
     return 1;
