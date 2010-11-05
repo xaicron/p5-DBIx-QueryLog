@@ -7,7 +7,6 @@ use 5.008_001;
 use DBI;
 use Data::Dump ();
 use Time::HiRes qw(gettimeofday tv_interval);
-use POSIX qw(strftime);
 
 our $VERSION = '0.01';
 
@@ -138,7 +137,7 @@ sub _logging {
     if (!$threshold || $time > $threshold) {
         my $caller = $class->_caller();
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            strftime("%FT%T", localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
+            scalar(localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
 
         my $logger = $class->logger;
         if ($logger) {
