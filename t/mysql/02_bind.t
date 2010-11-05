@@ -22,9 +22,11 @@ my $dbh = DBI->connect(
 DBIx::QueryLog->begin;
 
 my $res = capture {
-    $dbh->selectrow_hashref('SELECT * FROM user');
+    $dbh->selectrow_hashref(
+        'SELECT * FROM user WHERE User = ?', undef, 'root'
+    );
 };
 
-like $res, qr/SELECT \* FROM user/;
+like $res, qr/SELECT \* FROM user WHERE User = 'root'/;
 
 done_testing;
