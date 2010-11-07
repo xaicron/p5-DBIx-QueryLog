@@ -268,11 +268,11 @@ The statement and bind-params are logs separately.
 
 =item begin
 
-SEE ALSO L<Localization>
+SEE ALSO L</Localization>
 
 =item end
 
-SEE ALSO L<Localization>
+SEE ALSO L</Localization>
 
 =back
 
