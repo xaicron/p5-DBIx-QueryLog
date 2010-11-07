@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.04  Sun Nov  7 18:17:11 2010
+    - Fix broken links for document
+
 0.03  Sun Nov  7 12:55:09 2010
     - added to Test::Requires test_requires
 
