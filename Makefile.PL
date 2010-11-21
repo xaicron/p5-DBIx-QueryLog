@@ -16,4 +16,10 @@ author_tests 'xt';
 auto_include();
 auto_set_repository();
 
+if (can_use 'Test::mysqld' and can_use 'JSON') {
+    default_test_target(
+        run_on_prepare => 't/setup_mysqld.pl',
+    );
+}
+
 WriteAll;

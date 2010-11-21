@@ -21,6 +21,22 @@ sub new_logger {
     bless {}, 't::Util::Logger';
 }
 
+sub setup_mysqld {
+    eval { require Test::mysqld; 1 } or return;
+    my $mysqld;
+    if (my $json = $ENV{__TEST_DBIxQueryLog}) {
+        eval { require JSON; 1 } or return;
+        my $obj = JSON::decode_json($json);
+        $mysqld = bless $obj, 'Test::mysqld';
+    }
+    else {
+        $mysqld = Test::mysqld->new(my_cnf => {
+            'skip-networking' => '',
+        }) or return;
+    }
+    return $mysqld;
+}
+
 sub capture(&) {
     my ($code) = @_;
 

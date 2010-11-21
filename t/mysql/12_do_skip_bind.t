@@ -9,9 +9,8 @@ use DBI;
 
 DBIx::QueryLog->skip_bind(1);
 
-my $mysqld = Test::mysqld->new(my_cnf => {
-    'skip-networking' => '',
-}) or plan skip_all => $Test::mysqld::errstr;
+my $mysqld = t::Util->setup_mysqld
+    or plan skip_all => $Test::mysqld::errstr || 'failed setup_mysqld';
 
 my $dbh = DBI->connect(
     $mysqld->dsn(dbname => 'mysql'), '', '',
