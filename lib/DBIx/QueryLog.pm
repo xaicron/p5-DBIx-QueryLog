@@ -276,7 +276,7 @@ sub WRITE {
 sub CLOSE {
     my $self = shift;
     undef $$self;
-    return 0;
+    return 1;
 }
 
 1;
