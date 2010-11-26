@@ -10,9 +10,14 @@ use Time::HiRes qw(gettimeofday tv_interval);
 
 our $VERSION = '0.04';
 
-my $org_execute = \&DBI::st::execute;
-my $org_db_do   = \&DBI::db::do;
-my $has_mysql   = eval { require DBD::mysql; 1 } ? 1 : 0;
+my $org_execute               = \&DBI::st::execute;
+my $org_db_do                 = \&DBI::db::do;
+my $org_db_selectall_arrayref = \&DBI::db::selectall_arrayref;
+my $org_db_selectrow_arrayref = \&DBI::db::selectrow_arrayref;
+my $org_db_selectrow_array    = \&DBI::db::selectrow_array;
+
+my $has_mysql = eval { require DBD::mysql; 1 } ? 1 : 0;
+my $pp_mode   = $INC{'DBI/PurePerl.pm'} ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
@@ -21,21 +26,40 @@ our $LOG_LEVEL = 'debug';
 
 my $st_execute;
 my $db_do;
+my $selectall_arrayref;
+my $selectrow_arrayref;
+my $selectrow_array;
 
 sub import {
     my ($class) = @_;
+
     $st_execute ||= $class->_st_execute($org_execute);
-    $db_do ||= $class->_db_do($org_db_do) if $has_mysql;
+    $db_do      ||= $class->_db_do($org_db_do) if $has_mysql;
+    unless ($pp_mode) {
+        $selectall_arrayref ||= $class->_select_array($org_db_selectall_arrayref);
+        $selectrow_arrayref ||= $class->_select_array($org_db_selectrow_arrayref);
+        $selectrow_array    ||= $class->_select_array($org_db_selectrow_array, 1);
+    }
 
     no warnings qw(redefine prototype);
     *DBI::st::execute = $st_execute;
     *DBI::db::do = $db_do if $has_mysql;
+    unless ($pp_mode) {
+        *DBI::db::selectall_arrayref = $selectall_arrayref;
+        *DBI::db::selectrow_arrayref = $selectrow_arrayref;
+        *DBI::db::selectrow_array    = $selectrow_array;
+    }
 }
 
 sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute = $org_execute;
     *DBD::db::do = $org_db_do if $has_mysql;
+    unless ($pp_mode) {
+        *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
+        *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
+        *DBI::db::selectrow_array    = $org_db_selectrow_array;
+    }
 }
 
 *begin = \&import;
@@ -89,6 +113,56 @@ sub _st_execute {
 
         close $tfh if $tfh;
         return $wantarray ? @$res : $res;
+    };
+}
+
+sub _select_array {
+    my ($class, $org, $is_selectrow_array) = @_;
+
+    return sub {
+        my $wantarray = wantarray;
+        my ($dbh, $stmt, $attr, @bind) = @_;
+
+        my $probability = $class->probability;
+        if ($probability && int(rand() * $probability) % $probability != 0) {
+            return $org->($dbh, $stmt, $attr, @bind);
+        }
+
+        my $tfh;
+        my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
+        if ($class->skip_bind) {
+            $ret .= ' : ' . Data::Dump::dump(\@bind) if @bind;
+        }
+        else {
+            if ($dbh->{Driver}{Name} eq 'mysql') {
+                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
+                $dbh->trace('2|SQL', $tfh);
+            }
+            else {
+                my $i = 0;
+                $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
+            }
+        }
+
+        my $begin = [gettimeofday];
+        my $res;
+        if ($is_selectrow_array) {
+            $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : $org->($dbh, $stmt, $attr, @bind);
+        }
+        else {
+            $res = $org->($dbh, $stmt, $attr, @bind);
+        }
+        my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
+
+        $class->_logging($ret, $time);
+
+        close $tfh if $tfh;
+        if ($is_selectrow_array) {
+            use Data::Dumper;
+            warn Dumper $res;
+            return $wantarray ? @$res : $res;
+        }
+        return $res;
     };
 }
 
