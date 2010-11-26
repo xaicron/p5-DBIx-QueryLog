@@ -76,7 +76,7 @@ sub _st_execute {
                 $sth->trace('2|SQL', $tfh);
             }
             else {
-                my $i;
+                my $i = 0;
                 $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
             }
         }
