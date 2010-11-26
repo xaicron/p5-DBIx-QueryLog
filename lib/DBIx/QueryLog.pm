@@ -172,8 +172,7 @@ sub _caller {
 
 package PerlIO::via::DBIx::QueryLogLayer;
 
-my $mysql_pattern  = qr/^Binding parameters: (.*)$/;
-my $regex = qr/$mysql_pattern/x;
+my $regex = qr/^Binding parameters: (.*)/ms;
 
 sub PUSHED {
     my ($class, $mode, $fh) = @_;
@@ -191,12 +190,10 @@ sub WRITE {
 
     return 0 unless $buf;
 
-    for my $line (split /\n+/, $buf) {
-        if ($buf =~ /$regex/o) {
-            $buf = $1;
-            $buf =~ s/\n$//;
-            $$$self = $buf; # SQL
-        }
+    if ($buf =~ $regex) {
+        $buf = $1;
+        $buf =~ s/\n$//;
+        $$$self = $buf; # SQL
     }
 
     return 1;
