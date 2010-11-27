@@ -71,7 +71,7 @@ for my $accessor (qw/logger threshold probability skip_bind/) {
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
         my ($class, $args) = @_;
-        return $container->{$accessor} unless $args;
+        return $container->{$accessor} unless @_ > 1;
         $container->{$accessor} = $args;
     };
 }
