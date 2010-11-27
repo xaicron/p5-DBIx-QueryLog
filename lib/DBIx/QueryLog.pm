@@ -361,6 +361,12 @@ If you want to localize the scope are:
 
 Now you could enable logging between `begin` and `end`.
 
+head2 LOG_LEVEL
+
+If you want to change log_level are:
+
+  $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
+
 =head1 AUTHOR
 
 xaicron E<lt>xaicron {at} cpan.orgE<gt>
