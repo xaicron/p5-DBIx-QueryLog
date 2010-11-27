@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.06  Sat Nov 27 13:21:11 2010
+    - Fix accessors issue
+
 0.05  Sat Nov 27 01:05:36 2010
     - Fix multi line query problem for mysql
     - Supported select(all|row)_array*
