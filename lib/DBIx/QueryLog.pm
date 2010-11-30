@@ -5,7 +5,6 @@ use warnings;
 use 5.008_001;
 
 use DBI;
-use Data::Dump ();
 use Time::HiRes qw(gettimeofday tv_interval);
 
 our $VERSION = '0.06';
@@ -91,7 +90,8 @@ sub _st_execute {
         my $tfh;
         my $ret = $sth->{Statement};
         if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump(\@_) if @_;
+            local $" = ', ';
+            $ret .= " : [@_]" if @_;
         }
         else {
             my $dbh = $sth->{Database};
@@ -131,7 +131,8 @@ sub _select_array {
         my $tfh;
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
         if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump(\@bind) if @bind;
+            local $" = ', ';
+            $ret .= " : [@bind]" if @bind;
         }
         else {
             if ($dbh->{Driver}{Name} eq 'mysql') {
@@ -185,7 +186,8 @@ sub _db_do {
         my $tfh;
         my $ret = $stmt;
         if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump([ @bind ]) if @bind;
+            local $" = ', ';
+            $ret .= " : [@bind]" if @bind;
         }
         else {
             open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;

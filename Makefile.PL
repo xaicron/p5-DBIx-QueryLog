@@ -3,7 +3,6 @@ name 'DBIx-QueryLog';
 all_from 'lib/DBIx/QueryLog.pm';
 
 requires 'DBI';
-requires 'Data::Dump';
 recommends 'DBD::mysql';
 recommends 'DBD::sqlite';
 

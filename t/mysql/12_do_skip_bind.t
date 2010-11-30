@@ -26,6 +26,6 @@ my $res = capture {
     $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
 };
 
-like $res, qr/SELECT \* FROM user WHERE User = \? : \["root"\]/;
+like $res, qr/SELECT \* FROM user WHERE User = \? : \[root\]/;
 
 done_testing;

@@ -13,6 +13,6 @@ my $res = capture {
     $dbh->do('SELECT * FROM sqlite_master WHERE name = ?', undef, 'foo');
 };
 
-like $res, qr/SELECT \* FROM sqlite_master WHERE name = \? : \["foo"\]/, 'SQL';
+like $res, qr/SELECT \* FROM sqlite_master WHERE name = \? : \[foo\]/, 'SQL';
 
 done_testing;
