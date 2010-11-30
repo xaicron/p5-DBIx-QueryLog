@@ -87,7 +87,6 @@ sub _st_execute {
             return $org->($sth, @_);
         }
 
-        my $tfh;
         my $ret = $sth->{Statement};
         if ($class->skip_bind) {
             local $" = ', ';
@@ -95,14 +94,8 @@ sub _st_execute {
         }
         else {
             my $dbh = $sth->{Database};
-            if ($dbh->{Driver}{Name} eq 'mysql') {
-                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $sth->trace('2|SQL', $tfh);
-            }
-            else {
-                my $i = 0;
-                $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
-            }
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
@@ -111,7 +104,6 @@ sub _st_execute {
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         return $wantarray ? @$res : $res;
     };
 }
@@ -128,21 +120,14 @@ sub _select_array {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $tfh;
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
         if ($class->skip_bind) {
             local $" = ', ';
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            if ($dbh->{Driver}{Name} eq 'mysql') {
-                open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-                $dbh->trace('2|SQL', $tfh);
-            }
-            else {
-                my $i = 0;
-                $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
-            }
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
@@ -157,7 +142,6 @@ sub _select_array {
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         if ($is_selectrow_array) {
             use Data::Dumper;
             warn Dumper $res;
@@ -183,15 +167,14 @@ sub _db_do {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $tfh;
         my $ret = $stmt;
         if ($class->skip_bind) {
             local $" = ', ';
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
-            $dbh->trace('2|SQL', $tfh);
+            my $i = 0;
+            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
         }
 
         my $begin = [gettimeofday];
@@ -200,7 +183,6 @@ sub _db_do {
 
         $class->_logging($ret, $time);
 
-        close $tfh if $tfh;
         return $wantarray ? @$res : $res;
     };
 }
@@ -243,41 +225,6 @@ sub _caller {
     }
 
     return $caller;
-}
-
-package PerlIO::via::DBIx::QueryLogLayer;
-
-my $regex = qr/^Binding parameters: (.*)/ms;
-
-sub PUSHED {
-    my ($class, $mode, $fh) = @_;
-    bless \my($logger), $class;
-}
-
-sub OPEN {
-    my ($self, $path, $mode, $fh) = @_;
-    $$self = $path;
-    return 1;
-}
-
-sub WRITE {
-    my ($self, $buf, $fh) = @_;
-
-    return 0 unless $buf;
-
-    if ($buf =~ $regex) {
-        $buf = $1;
-        $buf =~ s/\n$//;
-        $$$self = $buf; # SQL
-    }
-
-    return 1;
-}
-
-sub CLOSE {
-    my $self = shift;
-    undef $$self;
-    return 1;
 }
 
 1;
