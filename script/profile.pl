@@ -9,7 +9,7 @@ use t::Util;
 use File::Spec;
 use Test::mysqld;
 
-use DBIx::QueryLog;
+use DBIx::QueryLog ();
 
 local $SIG{INT} = sub { exit 1 };
 
@@ -24,6 +24,8 @@ my $dbh = DBI->connect(
 
 local *STDERR;
 open STDERR, '>', File::Spec->devnull or die $!;
+
+DBIx::QueryLog->begin;
 
 for (1..1000) {
     $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
