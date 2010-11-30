@@ -82,13 +82,13 @@ sub _st_execute {
         my $wantarray = wantarray ? 1 : 0;
         my $sth = shift;
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($sth, @_);
         }
 
         my $ret = $sth->{Statement};
-        if ($class->skip_bind) {
+        if ($container->{skip_bind}) {
             local $" = ', ';
             $ret .= " : [@_]" if @_;
         }
@@ -115,13 +115,13 @@ sub _select_array {
         my $wantarray = wantarray;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        if ($class->skip_bind) {
+        if ($container->{skip_bind}) {
             local $" = ', ';
             $ret .= " : [@bind]" if @bind;
         }
@@ -160,13 +160,13 @@ sub _db_do {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $probability = $class->probability;
+        my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $ret = $stmt;
-        if ($class->skip_bind) {
+        if ($container->{skip_bind}) {
             local $" = ', ';
             $ret .= " : [@bind]" if @bind;
         }
@@ -188,14 +188,21 @@ sub _db_do {
 sub _logging {
     my ($class, $ret, $time) = @_;
 
-    my $threshold = $class->threshold;
+    my $threshold = $container->{threshold};
     if (!$threshold || $time > $threshold) {
-        my $caller = $class->_caller();
+        my $i = 0;
+        my $caller = { pkg => '???', line => '???', file => '???' };
+        while (my @c = caller(++$i)) {
+            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+                $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
+                last;
+            }
+        }
+
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
             scalar(localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
 
-        my $logger = $class->logger;
-        if ($logger) {
+        if (my $logger = $container->{logger}) {
             $logger->log(
                 level   => $LOG_LEVEL,
                 message => $message,
@@ -210,19 +217,6 @@ sub _logging {
             print STDERR $message;
         }
     }
-}
-
-sub _caller {
-    my $i = 0;
-    my $caller = { pkg => '???', line => '???', file => '???' };
-    while (my @c = caller(++$i)) {
-        if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
-            $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
-            last;
-        }
-    }
-
-    return $caller;
 }
 
 1;
