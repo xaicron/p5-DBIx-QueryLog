@@ -171,22 +171,21 @@ sub _db_do {
 
     return sub {
         my $wantarray = wantarray ? 1 : 0;
-        my $dbh  = shift;
-        my $stmt = shift;
+        my ($dbh, $stmt, $attr, @bind) = @_;
 
         if ($dbh->{Driver}{Name} ne 'mysql') {
-            return $org->($dbh, $stmt, @_); 
+            return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $probability = $class->probability;
         if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org->($dbh, $stmt, @_);
+            return $org->($dbh, $stmt, $attr, @bind);
         }
 
         my $tfh;
         my $ret = $stmt;
         if ($class->skip_bind) {
-            $ret .= ' : ' . Data::Dump::dump([ @_[1..$#_] ]) if @_ > 1;
+            $ret .= ' : ' . Data::Dump::dump([ @bind ]) if @bind;
         }
         else {
             open $tfh, '>:via(DBIx::QueryLogLayer)', \$ret;
@@ -194,7 +193,7 @@ sub _db_do {
         }
 
         my $begin = [gettimeofday];
-        my $res = $wantarray ? [$org->($dbh, $stmt, @_)] : scalar $org->($dbh, $stmt, @_);
+        my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
         $class->_logging($ret, $time);
