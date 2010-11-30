@@ -54,7 +54,7 @@ sub import {
 sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute = $org_execute;
-    *DBD::db::do = $org_db_do if $has_mysql;
+    *DBI::db::do = $org_db_do if $has_mysql;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
         *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
