@@ -143,8 +143,6 @@ sub _select_array {
         $class->_logging($ret, $time);
 
         if ($is_selectrow_array) {
-            use Data::Dumper;
-            warn Dumper $res;
             return $wantarray ? @$res : $res;
         }
         return $res;
