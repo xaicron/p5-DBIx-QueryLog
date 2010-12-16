@@ -7,7 +7,7 @@ use 5.008_001;
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
 
-our $VERSION = '0.06';
+our $VERSION = '0.07';
 
 my $org_execute               = \&DBI::st::execute;
 my $org_db_do                 = \&DBI::db::do;

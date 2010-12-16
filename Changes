@@ -1,5 +1,9 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.07  Fri Dec 17 01:56:36 2010
+    - Fixed unimport DBI::db::do not working
+    - Optimized
+
 0.06  Sat Nov 27 13:21:11 2010
     - Fix accessors issue
 
