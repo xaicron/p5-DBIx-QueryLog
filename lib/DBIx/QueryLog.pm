@@ -301,7 +301,7 @@ If you want to localize the scope are:
 
 Now you could enable logging between `begin` and `end`.
 
-head2 LOG_LEVEL
+=head2 LOG_LEVEL
 
 If you want to change log_level are:
 
