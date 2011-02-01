@@ -94,8 +94,7 @@ sub _st_execute {
         }
         else {
             my $dbh = $sth->{Database};
-            my $i = 0;
-            $ret =~ s/\?/$dbh->quote($_[$i++])/eg;
+            $ret = _bind($dbh, $ret, @_);
         }
 
         my $begin = [gettimeofday];
@@ -126,8 +125,7 @@ sub _select_array {
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            my $i = 0;
-            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
+            $ret = _bind($dbh, $ret, @bind);
         }
 
         my $begin = [gettimeofday];
@@ -171,8 +169,7 @@ sub _db_do {
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            my $i = 0;
-            $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
+            $ret = _bind($dbh, $ret, @bind);
         }
 
         my $begin = [gettimeofday];
@@ -183,6 +180,31 @@ sub _db_do {
 
         return $wantarray ? @$res : $res;
     };
+}
+
+sub _bind {
+    my ($dbh, $ret, @bind) = @_;
+
+    my $i = 0;
+    if ($dbh->{Driver}{Name} eq 'mysql' && $DBD::mysql::VERSION >= 2.9016) {
+        my $limit_flag = 0;
+        $ret =~ s{([?)])}{
+            if ($1 eq '?') {
+                $limit_flag ||= do {
+                    my $pos = pos $ret;
+                    substr($ret, $pos - 6, 6) =~ /\A[Ll](?:IMIT|imit) \z/ ? 1 : 0;
+                };
+                $limit_flag ? $bind[$i++] : $dbh->quote($bind[$i++]);
+            }
+            elsif ($1 eq ')') {
+                $limit_flag = 0;
+                ')';
+            }
+        }eg;
+    } else {
+        $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
+    }
+    return $ret;
 }
 
 sub _logging {
