@@ -20,32 +20,28 @@ my $dbh = DBI->connect(
 
 DBIx::QueryLog->begin;
 
-for my $method (qw/selectrow_array selectrow_arrayref selectall_arrayref/) {
-    subtest $method => sub {
-        my $res = capture {
-            $dbh->$method(
-                'SELECT * FROM user WHERE User = ? LIMIT ? OFFSET ?', undef, 'root', 1, 0
-            );
-        };
-
-        like $res, qr/\QSELECT * FROM user WHERE User = 'root' LIMIT 1 OFFSET 0\E/;
-        done_testing;
+{
+    my $res = capture {
+        $dbh->selectrow_hashref(
+            'SELECT * FROM user WHERE User = ? LIMIT ? OFFSET ?',
+            undef,
+            'root', 1, 0,
+        );
     };
+
+    like $res, qr/\QSELECT * FROM user WHERE User = 'root' LIMIT 1 OFFSET 0\E/;
 }
 
-for my $method (qw/selectrow_array selectrow_arrayref selectall_arrayref/) {
-    subtest $method => sub {
-        my $res = capture {
-            $dbh->$method(
-                'SELECT * FROM (SELECT * FROM user WHERE User = ? LIMIT ?) AS user WHERE User = ? LIMIT ? OFFSET ?',
-                undef,
-                'root', 1, 'root', 1, 0
-            );
-        };
-
-        like $res, qr/\QSELECT * FROM (SELECT * FROM user WHERE User = 'root' LIMIT 1) AS user WHERE User = 'root' LIMIT 1 OFFSET 0\E/;
-        done_testing;
+{
+    my $res = capture {
+        $dbh->selectrow_arrayref(
+            'SELECT * FROM (SELECT * FROM user WHERE User = ? LIMIT ?) AS user WHERE User = ? LIMIT ? OFFSET ?',
+            undef,
+            'root', 1, 'root', 1, 0,
+        );
     };
+
+    like $res, qr/\QSELECT * FROM (SELECT * FROM user WHERE User = 'root' LIMIT 1) AS user WHERE User = 'root' LIMIT 1 OFFSET 0\E/;
 }
 
 done_testing;

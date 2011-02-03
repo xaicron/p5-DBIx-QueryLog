@@ -186,13 +186,13 @@ sub _bind {
     my ($dbh, $ret, @bind) = @_;
 
     my $i = 0;
-    if ($dbh->{Driver}{Name} eq 'mysql' && $DBD::mysql::VERSION >= 2.9016) {
+    if ($dbh->{Driver}{Name} eq 'mysql') {
         my $limit_flag = 0;
         $ret =~ s{([?)])}{
             if ($1 eq '?') {
                 $limit_flag ||= do {
                     my $pos = pos $ret;
-                    substr($ret, $pos - 6, 6) =~ /\A[Ll](?:IMIT|imit) \z/ ? 1 : 0;
+                    ($pos >= 6 && substr($ret, $pos - 6, 6) =~ /\A[Ll](?:IMIT|imit) \z/) ? 1 : 0;
                 };
                 $limit_flag ? $bind[$i++] : $dbh->quote($bind[$i++]);
             }
@@ -201,7 +201,8 @@ sub _bind {
                 ')';
             }
         }eg;
-    } else {
+    }
+    else {
         $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
     }
     return $ret;
