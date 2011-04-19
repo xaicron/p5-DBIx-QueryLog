@@ -25,6 +25,7 @@ my $res = capture {
     $sth->bind_param(1, 'root');
     $sth->bind_param(2, 'xaicron');
     $sth->execute;
+    ok !$sth->{private_DBIx_QueryLog}, 'clean';
 };
 
 like $res, qr/SELECT \* FROM user WHERE User = 'root' OR User = 'xaicron'/;

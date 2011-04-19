@@ -123,6 +123,8 @@ sub _st_execute {
             }
         }
 
+        $sth->{private_DBIx_QueryLog} = undef if $sth->{private_DBIx_QueryLog};
+
         my $begin = [gettimeofday];
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
