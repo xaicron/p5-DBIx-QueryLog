@@ -22,10 +22,22 @@ my $dbh = DBI->connect(
 
 DBIx::QueryLog->begin;
 
-my $res = capture {
-    $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+subtest 'do' => sub {
+    my $res = capture {
+        $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+    };
+
+    like $res, qr/SELECT \* FROM user WHERE User = \? : \[root\]/;
 };
 
-like $res, qr/SELECT \* FROM user WHERE User = \? : \[root\]/;
+subtest 'bind_param' => sub {
+    my $res = capture {
+        my $sth = $dbh->prepare('SELECT * FROM user WHERE User = ?');
+        $sth->bind_param(1, 'root');
+        $sth->execute;
+    };
+
+    like $res, qr/SELECT \* FROM user WHERE User = \? : \[root\]/;
+};
 
 done_testing;

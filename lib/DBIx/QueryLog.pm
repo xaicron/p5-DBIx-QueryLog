@@ -10,6 +10,7 @@ use Time::HiRes qw(gettimeofday tv_interval);
 our $VERSION = '0.09';
 
 my $org_execute               = \&DBI::st::execute;
+my $org_bind_param            = \&DBI::st::bind_param;
 my $org_db_do                 = \&DBI::db::do;
 my $org_db_selectall_arrayref = \&DBI::db::selectall_arrayref;
 my $org_db_selectrow_arrayref = \&DBI::db::selectrow_arrayref;
@@ -24,6 +25,7 @@ our %SKIP_PKG_MAP = (
 our $LOG_LEVEL = 'debug';
 
 my $st_execute;
+my $st_bind_param;
 my $db_do;
 my $selectall_arrayref;
 my $selectrow_arrayref;
@@ -32,8 +34,9 @@ my $selectrow_array;
 sub import {
     my ($class) = @_;
 
-    $st_execute ||= $class->_st_execute($org_execute);
-    $db_do      ||= $class->_db_do($org_db_do) if $has_mysql;
+    $st_execute    ||= $class->_st_execute($org_execute);
+    $st_bind_param ||= $class->_st_bind_param($org_bind_param);
+    $db_do         ||= $class->_db_do($org_db_do) if $has_mysql;
     unless ($pp_mode) {
         $selectall_arrayref ||= $class->_select_array($org_db_selectall_arrayref);
         $selectrow_arrayref ||= $class->_select_array($org_db_selectrow_arrayref);
@@ -41,8 +44,9 @@ sub import {
     }
 
     no warnings qw(redefine prototype);
-    *DBI::st::execute = $st_execute;
-    *DBI::db::do = $db_do if $has_mysql;
+    *DBI::st::execute    = $st_execute;
+    *DBI::st::bind_param = $st_bind_param;
+    *DBI::db::do         = $db_do if $has_mysql;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $selectall_arrayref;
         *DBI::db::selectrow_arrayref = $selectrow_arrayref;
@@ -52,8 +56,9 @@ sub import {
 
 sub unimport {
     no warnings qw(redefine prototype);
-    *DBI::st::execute = $org_execute;
-    *DBI::db::do = $org_db_do if $has_mysql;
+    *DBI::st::execute    = $org_execute;
+    *DBI::st::bind_param = $org_bind_param;
+    *DBI::db::do         = $org_db_do if $has_mysql;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
         *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
@@ -89,12 +94,33 @@ sub _st_execute {
 
         my $ret = $sth->{Statement};
         if ($container->{skip_bind}) {
+            my @params;
+            if (@_) {
+                @params = @_;
+            }
+            elsif ($sth->{private_DBIx_QueryLog}) {
+                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
+                    my $value = $bind_param->[0];
+                    push @params, $value;
+                }
+            }
             local $" = ', ';
-            $ret .= " : [@_]" if @_;
+            $ret .= " : [@params]" if @params;
         }
         else {
             my $dbh = $sth->{Database};
-            $ret = _bind($dbh, $ret, @_);
+            if (@_) {
+                $ret = _bind($dbh, $ret, @_);
+            }
+            elsif ($sth->{private_DBIx_QueryLog}) {
+                my @params;
+                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
+                    ### TODO SQL_TYPE ?
+                    my $value = $bind_param->[0];
+                    push @params, $value;
+                }
+                $ret = _bind($dbh, $ret, @params);
+            }
         }
 
         my $begin = [gettimeofday];
@@ -104,6 +130,17 @@ sub _st_execute {
         $class->_logging($ret, $time);
 
         return $wantarray ? @$res : $res;
+    };
+}
+
+sub _st_bind_param {
+    my ($class, $org) = @_;
+
+    return sub {
+        my ($sth, $param, $value, $attr) = @_;
+        $sth->{private_DBIx_QueryLog} ||= [];
+        $sth->{private_DBIx_QueryLog}[$param - 1] = [$value, $attr];
+        $org->(@_);
     };
 }
 

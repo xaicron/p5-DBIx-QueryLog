@@ -9,10 +9,22 @@ my $dbh = t::Util->new_dbh;
 
 DBIx::QueryLog->skip_bind(1);
 
-my $res = capture {
-    $dbh->do('SELECT * FROM sqlite_master WHERE name = ?', undef, 'foo');
+subtest 'simple' => sub {
+    my $res = capture {
+        $dbh->do('SELECT * FROM sqlite_master WHERE name = ?', undef, 'foo');
+    };
+
+    like $res, qr/SELECT \* FROM sqlite_master WHERE name = \? : \[foo\]/, 'SQL';
 };
 
-like $res, qr/SELECT \* FROM sqlite_master WHERE name = \? : \[foo\]/, 'SQL';
+subtest 'bind_param' => sub {
+    my $res = capture {
+        my $sth = $dbh->prepare('SELECT * FROM sqlite_master WHERE name = ?');
+        $sth->bind_param(1, 'foo');
+        $sth->execute;
+    };
+
+    like $res, qr/SELECT \* FROM sqlite_master WHERE name = \? : \[foo\]/, 'SQL';
+};
 
 done_testing;
