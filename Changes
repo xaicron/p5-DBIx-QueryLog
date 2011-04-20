@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.10  Thu Apr 21 01:16:10 2011
+    - Supported bind_param
+
 0.09  Thu Feb 24 23:56:36 2011
     - Fixed problem on DBD::mysql. limit after the placeholder was quoted. but should not be it. (yibe++)
 
