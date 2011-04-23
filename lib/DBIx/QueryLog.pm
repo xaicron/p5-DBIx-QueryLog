@@ -110,16 +110,16 @@ sub _st_execute {
         else {
             my $dbh = $sth->{Database};
             if (@_) {
-                $ret = _bind($dbh, $ret, @_);
+                $ret = _bind($dbh, $ret, \@_);
             }
             elsif ($sth->{private_DBIx_QueryLog}) {
-                my @params;
+                my (@params, @types);
                 for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                    ### TODO SQL_TYPE ?
                     my $value = $bind_param->[0];
-                    push @params, $value;
+                    push @params, $bind_param->[0];
+                    push @types, $bind_param->[1]{TYPE};
                 }
-                $ret = _bind($dbh, $ret, @params);
+                $ret = _bind($dbh, $ret, \@params, \@types);
             }
         }
 
@@ -141,6 +141,7 @@ sub _st_bind_param {
     return sub {
         my ($sth, $p_num, $value, $attr) = @_;
         $sth->{private_DBIx_QueryLog} ||= [];
+        $attr = +{ TYPE => $attr || 0 } unless ref $attr eq 'HASH';
         $sth->{private_DBIx_QueryLog}[$p_num - 1] = [$value, $attr];
         $org->(@_);
     };
@@ -164,7 +165,7 @@ sub _select_array {
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            $ret = _bind($dbh, $ret, @bind);
+            $ret = _bind($dbh, $ret, \@bind);
         }
 
         my $begin = [gettimeofday];
@@ -208,7 +209,7 @@ sub _db_do {
             $ret .= " : [@bind]" if @bind;
         }
         else {
-            $ret = _bind($dbh, $ret, @bind);
+            $ret = _bind($dbh, $ret, \@bind);
         }
 
         my $begin = [gettimeofday];
@@ -222,7 +223,8 @@ sub _db_do {
 }
 
 sub _bind {
-    my ($dbh, $ret, @bind) = @_;
+    my ($dbh, $ret, $params, $types) = @_;
+    $types ||= [];
 
     my $i = 0;
     if ($dbh->{Driver}{Name} eq 'mysql') {
@@ -233,7 +235,7 @@ sub _bind {
                     my $pos = pos $ret;
                     ($pos >= 6 && substr($ret, $pos - 6, 6) =~ /\A[Ll](?:IMIT|imit) \z/) ? 1 : 0;
                 };
-                $limit_flag ? $bind[$i++] : $dbh->quote($bind[$i++]);
+                $limit_flag ? $params->[$i++] : $dbh->quote($params->[$i], $types->[$i++]);
             }
             elsif ($1 eq ')') {
                 $limit_flag = 0;
@@ -242,7 +244,7 @@ sub _bind {
         }eg;
     }
     else {
-        $ret =~ s/\?/$dbh->quote($bind[$i++])/eg;
+        $ret =~ s/\?/$dbh->quote($params->[$i], $types->[$i++])/eg;
     }
     return $ret;
 }
