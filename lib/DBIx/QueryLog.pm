@@ -139,9 +139,9 @@ sub _st_bind_param {
     my ($class, $org) = @_;
 
     return sub {
-        my ($sth, $param, $value, $attr) = @_;
+        my ($sth, $p_num, $value, $attr) = @_;
         $sth->{private_DBIx_QueryLog} ||= [];
-        $sth->{private_DBIx_QueryLog}[$param - 1] = [$value, $attr];
+        $sth->{private_DBIx_QueryLog}[$p_num - 1] = [$value, $attr];
         $org->(@_);
     };
 }
