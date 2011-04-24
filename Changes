@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.11  Sun Apr 24 20:59:46 2011
+    - Supported SQL TYPE for bind_param
+
 0.10  Thu Apr 21 01:16:10 2011
     - Supported bind_param
 
