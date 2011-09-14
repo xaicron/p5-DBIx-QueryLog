@@ -13,3 +13,4 @@
 \.shipit
 \.gitignore
 \ppport.h
+^MYMETA\.
