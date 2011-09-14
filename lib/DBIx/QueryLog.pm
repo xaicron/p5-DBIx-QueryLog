@@ -154,6 +154,9 @@ sub _select_array {
         my $wantarray = wantarray;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
+        no warnings qw(redefine prototype);
+        local *DBI::st::execute = $org_execute; # suppress duplicate logging
+
         my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
