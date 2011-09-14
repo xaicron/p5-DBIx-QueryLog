@@ -4,7 +4,6 @@ use lib 'lib';
 use t::Util;
 use File::Spec;
 use Test::mysqld;
-use Benchmark qw/cmpthese timethese/;
 
 use DBIx::QueryLog ();
 
@@ -26,7 +25,7 @@ DBIx::QueryLog->skip_bind(1);
 
 my $enabled;
 my $disabled;
-cmpthese timethese 0, {
+cmpthese 5000, {
     original => sub {
         DBIx::QueryLog->unimport unless $disabled++;
         $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');

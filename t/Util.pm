@@ -5,8 +5,9 @@ use warnings;
 use DBI;
 use File::Temp qw/tempfile/;
 use base 'Exporter';
+use Benchmark qw/:hireswallclock/;
 
-our @EXPORT = qw/capture capture_logger/;
+our @EXPORT = qw/capture capture_logger cmpthese/;
 
 sub new_dbh {
     my ($fh, $file) = tempfile;
@@ -65,6 +66,14 @@ sub capture_logger(&) {
     $code->();
 
     return $content;
+}
+
+sub cmpthese {
+    my $result = Benchmark::timethese(@_);
+    for my $value (values %$result) {
+        $value->[1] = $value->[2] = $value->[0];
+    };
+    Benchmark::cmpthese($result);
 }
 
 package t::Util::Logger;
