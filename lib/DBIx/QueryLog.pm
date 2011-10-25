@@ -267,18 +267,23 @@ sub _logging {
             }
         }
 
+        my $localtime = do {
+            my ($sec, $min, $hour, $day, $mon, $year) = localtime;
+            sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
+        };
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            scalar(localtime), $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
+            $localtime, $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
 
         if (my $logger = $container->{logger}) {
             $logger->log(
                 level   => $LOG_LEVEL,
                 message => $message,
                 params  => {
-                    time => $time,
-                    sql  => $ret,
+                    localtime => $localtime,
+                    time      => $time,
+                    sql       => $ret,
                     %$caller,
-                }
+                },
             );
         }
         else {

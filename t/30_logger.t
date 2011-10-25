@@ -13,6 +13,11 @@ my $res = capture_logger {
     $dbh->do('SELECT * FROM sqlite_master');
 };
 
+ok exists $res->{time}, 'time is exists';
+ok exists $res->{localtime}, 'localtime is exists';
+is $res->{line}, 13, 'line ok';
+like $res->{file}, qr/30_logger\.t/, 'file ok';
+is $res->{pkg}, 'main', 'pkg ok';
 is $res->{sql}, 'SELECT * FROM sqlite_master', 'query ok';
 
 done_testing;
