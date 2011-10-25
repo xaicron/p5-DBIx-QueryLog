@@ -75,7 +75,7 @@ sub unimport {
 *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind color useqq/) {
+for my $accessor (qw/logger threshold probability skip_bind color useqq compress/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -278,6 +278,11 @@ sub _logging {
             $ret = Data::Dumper::Dumper($ret);
         }
 
+        if ($container->{compress} || $ENV{DBIX_QUERYLOG_COMPRESS}) {
+            require SQL::Tokenizer;
+            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+        }
+
         my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
         my $localtime = do {
             my ($sec, $min, $hour, $day, $mon, $year) = localtime;
@@ -379,6 +384,16 @@ using C<< $Data::Dumper::Useqq >>.
   DBIx::QueryLog->useqq(1);
 
 And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
+
+=item compress
+
+Compress sql using L<< SQL::Tokenizer >>.
+
+  DBIx::QueryLog->compress(1);
+  #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
+  #  TO  : SELECT * FROM foo WHERE bar = 'baz'
+
+And, you can also specify C<< DBIX_QUERYLOG_COMPRESS >> environment variable.
 
 =item begin
 
