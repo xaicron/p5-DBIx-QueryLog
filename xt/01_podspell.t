@@ -33,6 +33,7 @@ DBIx::QueryLog
 DBI
 SQL
 params
+useqq
 
 # personal section
 xaicron

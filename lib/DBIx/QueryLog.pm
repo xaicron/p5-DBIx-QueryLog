@@ -371,7 +371,7 @@ The statement and bind-params are logs separately.
 
 =item color
 
-If you want to colored sql output are:
+If you want to colored SQL output are:
 
   DBIx::QueryLog->color('green');
 
@@ -387,7 +387,7 @@ And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
 
 =item compress
 
-Compress sql using L<< SQL::Tokenizer >>.
+Compress SQL using L<< SQL::Tokenizer >>.
 
   DBIx::QueryLog->compress(1);
   #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
