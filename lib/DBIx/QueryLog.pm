@@ -7,6 +7,7 @@ use 5.008_001;
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
 use Term::ANSIColor qw(colored);
+use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MsWin32';
 
@@ -74,7 +75,7 @@ sub unimport {
 *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind color/) {
+for my $accessor (qw/logger threshold probability skip_bind color useqq/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -270,6 +271,13 @@ sub _logging {
             }
         }
 
+        if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
+            local $Data::Dumper::Useqq  = 1;
+            local $Data::Dumper::Terse  = 1;
+            local $Data::Dumper::Indent = 0;
+            $ret = Data::Dumper::Dumper($ret);
+        }
+
         my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
         my $localtime = do {
             my ($sec, $min, $hour, $day, $mon, $year) = localtime;
@@ -363,6 +371,14 @@ If you want to colored sql output are:
   DBIx::QueryLog->color('green');
 
 And, you can also specify C<< DBIX_QUERYLOG_COLOR >> environment variable.
+
+=item useqq
+
+using C<< $Data::Dumper::Useqq >>.
+
+  DBIx::QueryLog->useqq(1);
+
+And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
 
 =item begin
 
