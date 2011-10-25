@@ -6,6 +6,9 @@ use 5.008_001;
 
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
+use Term::ANSIColor qw(colored);
+
+$ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MsWin32';
 
 our $VERSION = '0.12';
 
@@ -71,7 +74,7 @@ sub unimport {
 *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind/) {
+for my $accessor (qw/logger threshold probability skip_bind color/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -267,12 +270,15 @@ sub _logging {
             }
         }
 
+        my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
         my $localtime = do {
             my ($sec, $min, $hour, $day, $mon, $year) = localtime;
             sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
         };
         my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            $localtime, $caller->{pkg}, $time, $ret, $caller->{file}, $caller->{line};
+            $localtime, $caller->{pkg}, $time,
+            $color ? colored([$color], $ret) : $ret,
+            $caller->{file}, $caller->{line};
 
         if (my $logger = $container->{logger}) {
             $logger->log(
@@ -349,6 +355,14 @@ The statement and bind-params are logs separately.
   DBIx::QueryLog->skip_bind(1);
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
+
+=item color
+
+If you want to colored sql output are:
+
+  DBIx::QueryLog->color('green');
+
+And, you can also specify C<< DBIX_QUERYLOG_COLOR >> environment variable.
 
 =item begin
 
