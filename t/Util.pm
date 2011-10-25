@@ -6,6 +6,7 @@ use DBI;
 use File::Temp qw/tempfile/;
 use base 'Exporter';
 use Benchmark qw/:hireswallclock/;
+use IO::Handle;
 
 our @EXPORT = qw/capture capture_logger cmpthese/;
 
@@ -41,9 +42,9 @@ sub setup_mysqld {
 sub capture(&) {
     my ($code) = @_;
 
-    local *STDERR;
     open my $fh, '>', \my $content;
-    *STDERR = $fh;
+    $fh->autoflush(1);
+    local $DBIx::QueryLog::OUTPUT = $fh;
     $code->();
     close $fh;
     return $content;

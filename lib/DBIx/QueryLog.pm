@@ -23,6 +23,7 @@ our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
 our $LOG_LEVEL = 'debug';
+our $OUTPUT    = *STDERR;
 
 my $st_execute;
 my $st_bind_param;
@@ -281,7 +282,7 @@ sub _logging {
             );
         }
         else {
-            print STDERR $message;
+            print {$OUTPUT} $message;
         }
     }
 }
@@ -373,6 +374,15 @@ Now you could enable logging between `begin` and `end`.
 If you want to change log_level are:
 
   $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
+
+=head2 OUTPUT
+
+If you want to change log output are:
+
+  open my $fh, '>', 'dbix_query.log';
+  $DBIx::QueryLog::OUTPUT = $fh;
+
+Default C<< $OUTPUT >> is C<< STDERR >>.
 
 =head1 AUTHOR
 
