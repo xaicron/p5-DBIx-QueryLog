@@ -13,8 +13,8 @@ test_requires 'Test::Requires';
 tests join q{ }, map { sprintf 't%s.t', '/*' x $_ } 1..3;
 author_tests 'xt';
 
-auto_include();
-auto_set_repository();
+repository 'https://github.com/xaicron/p5-DBIx-QueryLog';
+bugtracker 'https://github.com/xaicron/p5-DBIx-QueryLog/issues';
 
 if (can_use 'Test::mysqld' and can_use 'JSON') {
     default_test_target(
