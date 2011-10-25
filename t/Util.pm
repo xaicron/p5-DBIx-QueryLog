@@ -41,9 +41,8 @@ sub setup_mysqld {
 sub capture(&) {
     my ($code) = @_;
 
-    local *STDERR;
     open my $fh, '>', \my $content;
-    *STDERR = $fh;
+    local $DBIx::QueryLog::ERROR_OUTPUT = $fh;
     $code->();
     close $fh;
     return $content;
