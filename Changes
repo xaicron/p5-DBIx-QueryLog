@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.14  Wed Oct 26 14:32:28 2011
+    - Fixed typo
+
 0.13  Wed Oct 26 14:21:24 2011
     - Added some options
     - Added $OUTPUT variable
