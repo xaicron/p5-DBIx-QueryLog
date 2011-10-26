@@ -1,5 +1,10 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.13  Wed Oct 26 14:21:24 2011
+    - Added some options
+    - Added $OUTPUT variable
+    - Changed localtime format
+
 0.12  Thu Sep 15 02:42:42 2011
     - Fix duplicate logging for selectall_arrayref() (DBD::mysql only) 
 
