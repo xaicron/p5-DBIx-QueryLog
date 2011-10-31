@@ -5,7 +5,7 @@ use Test::More;
 use t::Util;
 use DBIx::QueryLog;
 
-DBIx::QueryLog->compress(1);
+DBIx::QueryLog->compact(1);
 DBIx::QueryLog->useqq(1);
 
 my $dbh = t::Util->new_dbh;

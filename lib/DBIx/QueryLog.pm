@@ -75,7 +75,7 @@ sub unimport {
 *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind color useqq compress/) {
+for my $accessor (qw/logger threshold probability skip_bind color useqq compact/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -271,7 +271,7 @@ sub _logging {
             }
         }
 
-        if ($container->{compress} || $ENV{DBIX_QUERYLOG_COMPRESS}) {
+        if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
             require SQL::Tokenizer;
             $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
         }
@@ -385,15 +385,15 @@ using C<< $Data::Dumper::Useqq >>.
 
 And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
 
-=item compress
+=item compact
 
-Compress SQL using L<< SQL::Tokenizer >>.
+Compaction SQL using L<< SQL::Tokenizer >>.
 
-  DBIx::QueryLog->compress(1);
+  DBIx::QueryLog->compact(1);
   #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
   #  TO  : SELECT * FROM foo WHERE bar = 'baz'
 
-And, you can also specify C<< DBIX_QUERYLOG_COMPRESS >> environment variable.
+And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
 =item begin
 
