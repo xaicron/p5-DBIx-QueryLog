@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.16  Mon Oct 31 17:15:38 2011
+    - Changed s/compress/compact/
+
 0.15  Mon Oct 31 00:32:27 2011
     - Fix: compress with useqq was broken
 
