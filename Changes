@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.17  Tue Nov  1 00:39:58 2011
+    - Added: specify code ref to $OUTPUT
+
 0.16  Mon Oct 31 17:15:38 2011
     - Changed s/compress/compact/
 
