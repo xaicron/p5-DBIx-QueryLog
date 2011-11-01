@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.18  Wed Nov  2 02:19:23 2011
+    - Added bind_params parameter to logger (requested by tokuhitom++)
+
 0.17  Tue Nov  1 00:39:58 2011
     - Added: specify code ref to $OUTPUT
 
