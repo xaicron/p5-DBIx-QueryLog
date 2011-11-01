@@ -236,75 +236,76 @@ sub _bind {
 
 sub _logging {
     my ($class, $ret, $time, $bind_params) = @_;
-    $bind_params ||= [];
 
     my $threshold = $container->{threshold};
-    if (!$threshold || $time > $threshold) {
-        my $i = 0;
-        my $caller = { pkg => '???', line => '???', file => '???' };
-        while (my @c = caller(++$i)) {
-            if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
-                $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
-                last;
-            }
+    return unless !$threshold || $time > $threshold;
+
+    $bind_params ||= [];
+
+    my $i = 0;
+    my $caller = { pkg => '???', line => '???', file => '???' };
+    while (my @c = caller(++$i)) {
+        if (!$SKIP_PKG_MAP{$c[0]} and $c[0] !~ /^DB[DI]::.*/) {
+            $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
+            last;
         }
+    }
 
-        my $sql = $ret;
-        if ($container->{skip_bind}) {
-            local $" = ', ';
-            $ret .= " : [@$bind_params]" if @$bind_params;
-        }
+    my $sql = $ret;
+    if ($container->{skip_bind}) {
+        local $" = ', ';
+        $ret .= " : [@$bind_params]" if @$bind_params;
+    }
 
-        if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
-            require SQL::Tokenizer;
-            $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
-        }
+    if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
+        require SQL::Tokenizer;
+        $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+    }
 
-        if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
-            local $Data::Dumper::Useqq  = 1;
-            local $Data::Dumper::Terse  = 1;
-            local $Data::Dumper::Indent = 0;
-            $ret = Data::Dumper::Dumper($ret);
-        }
+    if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
+        local $Data::Dumper::Useqq  = 1;
+        local $Data::Dumper::Terse  = 1;
+        local $Data::Dumper::Indent = 0;
+        $ret = Data::Dumper::Dumper($ret);
+    }
 
-        my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
-        my $localtime = do {
-            my ($sec, $min, $hour, $day, $mon, $year) = localtime;
-            sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
-        };
-        my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-            $localtime, $caller->{pkg}, $time,
-            $color ? colored([$color], $ret) : $ret,
-            $caller->{file}, $caller->{line};
+    my $color = $container->{color} || $ENV{DBIX_QUERYLOG_COLOR};
+    my $localtime = do {
+        my ($sec, $min, $hour, $day, $mon, $year) = localtime;
+        sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
+    };
+    my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
+        $localtime, $caller->{pkg}, $time,
+        $color ? colored([$color], $ret) : $ret,
+        $caller->{file}, $caller->{line};
 
-        if (my $logger = $container->{logger}) {
-            $logger->log(
-                level   => $LOG_LEVEL,
-                message => $message,
-                params  => {
-                    localtime   => $localtime,
-                    time        => $time,
-                    sql         => $sql,
-                    bind_params => $bind_params,
-                    %$caller,
-                },
+    if (my $logger = $container->{logger}) {
+        $logger->log(
+            level   => $LOG_LEVEL,
+            message => $message,
+            params  => {
+                localtime   => $localtime,
+                time        => $time,
+                sql         => $sql,
+                bind_params => $bind_params,
+                %$caller,
+            },
+        );
+    }
+    else {
+        if (ref $OUTPUT eq 'CODE') {
+            $OUTPUT->(
+                level       => $LOG_LEVEL,
+                message     => $message,
+                localtime   => $localtime,
+                time        => $time,
+                sql         => $sql,
+                bind_params => $bind_params,
+                %$caller,
             );
         }
         else {
-            if (ref $OUTPUT eq 'CODE') {
-                $OUTPUT->(
-                    level       => $LOG_LEVEL,
-                    message     => $message,
-                    localtime   => $localtime,
-                    time        => $time,
-                    sql         => $sql,
-                    bind_params => $bind_params,
-                    %$caller,
-                );
-            }
-            else {
-                print {$OUTPUT} $message;
-            }
+            print {$OUTPUT} $message;
         }
     }
 }
