@@ -91,41 +91,26 @@ sub _st_execute {
     return sub {
         my $wantarray = wantarray ? 1 : 0;
         my $sth = shift;
+        my @params = @_;
+        my @types;
 
         my $probability = $container->{probability};
         if ($probability && int(rand() * $probability) % $probability != 0) {
-            return $org->($sth, @_);
+            return $org->($sth, @params);
         }
 
         my $ret = $sth->{Statement};
-        if ($container->{skip_bind}) {
-            my @params;
-            if (@_) {
-                @params = @_;
+        if ($sth->{private_DBIx_QueryLog}) {
+            for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
+                my $value = $bind_param->[0];
+                push @params, $bind_param->[0];
+                push @types, $bind_param->[1]{TYPE};
             }
-            elsif ($sth->{private_DBIx_QueryLog}) {
-                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                    my $value = $bind_param->[0];
-                    push @params, $value;
-                }
-            }
-            local $" = ', ';
-            $ret .= " : [@params]" if @params;
         }
-        else {
+
+        unless ($container->{skip_bind} && @params) {
             my $dbh = $sth->{Database};
-            if (@_) {
-                $ret = _bind($dbh, $ret, \@_);
-            }
-            elsif ($sth->{private_DBIx_QueryLog}) {
-                my (@params, @types);
-                for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                    my $value = $bind_param->[0];
-                    push @params, $bind_param->[0];
-                    push @types, $bind_param->[1]{TYPE};
-                }
-                $ret = _bind($dbh, $ret, \@params, \@types);
-            }
+            $ret = _bind($dbh, $ret, \@params, \@types);
         }
 
         $sth->{private_DBIx_QueryLog} = undef if $sth->{private_DBIx_QueryLog};
@@ -134,7 +119,7 @@ sub _st_execute {
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@params);
 
         return $wantarray ? @$res : $res;
     };
@@ -168,11 +153,7 @@ sub _select_array {
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        if ($container->{skip_bind}) {
-            local $" = ', ';
-            $ret .= " : [@bind]" if @bind;
-        }
-        else {
+        unless ($container->{skip_bind} && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -186,7 +167,7 @@ sub _select_array {
         }
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@bind);
 
         if ($is_selectrow_array) {
             return $wantarray ? @$res : $res;
@@ -212,11 +193,7 @@ sub _db_do {
         }
 
         my $ret = $stmt;
-        if ($container->{skip_bind}) {
-            local $" = ', ';
-            $ret .= " : [@bind]" if @bind;
-        }
-        else {
+        unless ($container->{skip_bind} && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -224,7 +201,7 @@ sub _db_do {
         my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time);
+        $class->_logging($ret, $time, \@bind);
 
         return $wantarray ? @$res : $res;
     };
@@ -258,7 +235,8 @@ sub _bind {
 }
 
 sub _logging {
-    my ($class, $ret, $time) = @_;
+    my ($class, $ret, $time, $bind_params) = @_;
+    $bind_params ||= [];
 
     my $threshold = $container->{threshold};
     if (!$threshold || $time > $threshold) {
@@ -269,6 +247,12 @@ sub _logging {
                 $caller = { pkg => $c[0], file => $c[1], line => $c[2] };
                 last;
             }
+        }
+
+        my $sql = $ret;
+        if ($container->{skip_bind}) {
+            local $" = ', ';
+            $ret .= " : [@$bind_params]" if @$bind_params;
         }
 
         if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
@@ -298,9 +282,10 @@ sub _logging {
                 level   => $LOG_LEVEL,
                 message => $message,
                 params  => {
-                    localtime => $localtime,
-                    time      => $time,
-                    sql       => $ret,
+                    localtime   => $localtime,
+                    time        => $time,
+                    sql         => $sql,
+                    bind_params => $bind_params,
                     %$caller,
                 },
             );
@@ -308,11 +293,12 @@ sub _logging {
         else {
             if (ref $OUTPUT eq 'CODE') {
                 $OUTPUT->(
-                    level     => $LOG_LEVEL,
-                    message   => $message,
-                    localtime => $localtime,
-                    time      => $time,
-                    sql       => $ret,
+                    level       => $LOG_LEVEL,
+                    message     => $message,
+                    localtime   => $localtime,
+                    time        => $time,
+                    sql         => $sql,
+                    bind_params => $bind_params,
                     %$caller,
                 );
             }
