@@ -435,8 +435,22 @@ or you can specify code reference:
 
   $DBIx::QueryLog::OUTPUT = sub {
       my %params = @_;
-      printf "[%s] [%s] [%s] [%s] %s at %s line %s\n",
-        @params{qw/localtime level pkg time sql file line/};
+
+      my $format = << 'FORMAT';
+  localtime  : %s       # ISO-8601 without timezone
+  level      : %s       # log level ($DBIx::QueryLog::LOG_LEVEL)
+  time       : %.f      # elasped time
+  sql        : %s       # executed query
+  bind_params: %s       # bind parameters
+  pkg        : %s       # caller package
+  file       : %s       # caller file
+  line       : %d       # caller line
+  FORMAT
+
+      printf $format,
+          @params{qw/localtime level pkg time sql/},
+          join(', ', @{$params{bind_params}}),
+          @params{qw/file line/};
   };
 
 Default C<< $OUTPUT >> is C<< STDERR >>.
