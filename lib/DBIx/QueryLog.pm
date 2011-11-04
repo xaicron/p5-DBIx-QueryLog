@@ -71,8 +71,8 @@ sub unimport {
     }
 }
 
-*begin = \&import;
-*end   = \&unimport;
+*enable  = *begin = \&import;
+*disable = *end   = \&unimport;
 
 my $container = {};
 for my $accessor (qw/logger threshold probability skip_bind color useqq compact/) {
@@ -394,14 +394,6 @@ Compaction SQL using L<< SQL::Tokenizer >>.
 
 And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
-=item begin
-
-SEE ALSO L</Localization>
-
-=item end
-
-SEE ALSO L</Localization>
-
 =back
 
 =head1 TIPS
@@ -412,11 +404,11 @@ If you want to localize the scope are:
 
   use DBIx::QueryLog (); # or require DBIx::QueryLog;
 
-  DBIx::QueryLog->begin;
+  DBIx::QueryLog->begin; # or DBIx::QueryLog->enable
   my $row = $dbh->do(...);
-  DBIx::QueryLog->end;
+  DBIx::QueryLog->end;   # or DBIx::QueryLog->disable
 
-Now you could enable logging between `begin` and `end`.
+Now you could enable logging between C<< begin >> and C<< end >>.
 
 =head2 LOG_LEVEL
 
