@@ -5,7 +5,12 @@ use DBIx::QueryLog;
 
 my $q = 'DBIx::QueryLog';
 
-for my $accessor (qw/logger threshold probability skip_bind/) {
+my $accessors = [qw(
+    logger threshold probability skip_bind
+    color useqq compact
+)];
+
+for my $accessor (@$accessors) {
     subtest $accessor => sub {
         is $q->$accessor, undef, 'default';
         ok $q->$accessor('foo'), 'set ok';
