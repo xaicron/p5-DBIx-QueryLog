@@ -339,13 +339,13 @@ Currently, works on DBD::mysql and DBD::sqlite.
 
 =item threshold
 
-If exceed this value for logs. (default not set)
+Logged if exceeding this value. (default not set)
 
   DBIx::QueryLog->threshold(0.1); # sec
 
 =item probability
 
-Run once every "set value" times. (default not set)
+Run only once per defined value. (default not set)
 
   DBIx::QueryLog->probability(100); # about 1/100
 
@@ -359,10 +359,7 @@ Logger class must can be call `log` method.
 
 =item skip_bind
 
-If enabled, will be faster.
-
-But SQL is not bind.
-The statement and bind-params are logs separately.
+If enabled, will be faster, but SQL is not bound.
 
   DBIx::QueryLog->skip_bind(1);
   my $row = $dbh->do(...);
@@ -412,13 +409,15 @@ Now you could enable logging between C<< begin >> and C<< end >>.
 
 =head2 LOG_LEVEL
 
-If you want to change log_level are:
+If you set C<< logger >>, it might want to change the logging level.
+
+It can be modified as follows:
 
   $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
 
 =head2 OUTPUT
 
-If you want to change log output are:
+If you want to change of output are:
 
   open my $fh, '>', 'dbix_query.log';
   $DBIx::QueryLog::OUTPUT = $fh;
@@ -431,7 +430,7 @@ or you can specify code reference:
       my $format = << 'FORMAT';
   localtime  : %s       # ISO-8601 without timezone
   level      : %s       # log level ($DBIx::QueryLog::LOG_LEVEL)
-  time       : %.f      # elasped time
+  time       : %f       # elasped time
   sql        : %s       # executed query
   bind_params: %s       # bind parameters
   pkg        : %s       # caller package
