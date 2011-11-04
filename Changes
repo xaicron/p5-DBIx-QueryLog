@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.19  Sat Nov  5 03:43:22 2011
+    - Added alias of `begin` as `enable` and `end` as `disable`
+
 0.18  Wed Nov  2 02:19:23 2011
     - Added bind_params parameter to logger (requested by tokuhitom++)
 
