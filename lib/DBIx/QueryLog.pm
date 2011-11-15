@@ -258,8 +258,46 @@ sub _logging {
     }
 
     if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
-        require SQL::Tokenizer;
-        $ret = join q{ }, SQL::Tokenizer::tokenize_sql($ret, 1);
+        my ($buff, $i) = ('', 0);
+        my $skip_space    = 0;
+        my $before_escape = 0;
+        my $quote_char    = '';
+        for (my ($i, $l) = (0, length $ret); $i < $l; ++$i) {
+            my $s = substr $ret, $i, 1;
+            if (!$quote_char && ($s eq q{ }||$s eq "\n"||$s eq "\t"||$s eq "\r")) {
+                next if $skip_space;
+                $buff .= q{ };
+                $skip_space = 1;
+                next;
+            }
+            elsif ($s eq q{'} || $s eq q{"}) {
+                unless ($quote_char) {
+                    $quote_char = $s;
+                }
+                elsif (!$before_escape && $s eq $quote_char) {
+                    $quote_char = '';
+                }
+                else {
+                    $before_escape = 0;
+                }
+            }
+            elsif (!$before_escape && $quote_char && $s eq q{\\}) {
+                $before_escape = 1;
+            }
+            elsif (!$quote_char) {
+                if ($s eq q{(}) {
+                    $buff .= $s;
+                    $skip_space = 1;
+                    next;
+                }
+                elsif (($s eq q{)}||$s eq q{,}) && substr($buff, -1, 1) eq q{ }) {
+                    substr($buff, -1, 1) = '';
+                }
+            }
+            $buff .= $s;
+            $skip_space = 0;
+        }
+        ($ret = $buff) =~ s/^\s|\s$//g;
     }
 
     if ($container->{useqq} || $ENV{DBIX_QUERYLOG_USEQQ}) {
@@ -383,7 +421,7 @@ And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
 
 =item compact
 
-Compaction SQL using L<< SQL::Tokenizer >>.
+Compaction SQL.
 
   DBIx::QueryLog->compact(1);
   #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
