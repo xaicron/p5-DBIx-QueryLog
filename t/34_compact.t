@@ -20,6 +20,7 @@ SQL
     $dbh->do($stmt, undef, 'a b "c"', 'd ef', "fu '  ga1", 'a', 'b');
 };
 
+note $res;
 my $expects = quotemeta join ' ',
     q|SELECT /* comment */ *, name, type FROM sqlite_master|,
     q|WHERE (type = 'a b "c"' AND name = 'd ef')|,

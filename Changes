@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.21  Wed Nov 16 20:00:36 2011
+    - removed SQL::Tokenizer
+
 0.20  Sat Nov  5 04:45:18 2011
     - Fixed doc (no code changes)
 
