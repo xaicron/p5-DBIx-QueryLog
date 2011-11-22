@@ -100,20 +100,19 @@ sub _st_execute {
         }
 
         my $ret = $sth->{Statement};
-        if ($sth->{private_DBIx_QueryLog}) {
-            for my $bind_param (@{$sth->{private_DBIx_QueryLog}}) {
-                my $value = $bind_param->[0];
-                push @params, $bind_param->[0];
-                push @types, $bind_param->[1]{TYPE};
+        if (my $attrs = $sth->{private_DBIx_QueryLog_attrs}) {
+            my $bind_params = $sth->{private_DBIx_QueryLog_params};
+            for my $i (1..@$attrs) {
+                push @types, $attrs->[$i - 1]{TYPE};
+                push @params, $bind_params->[$i - 1] if $bind_params;
             }
         }
+        $sth->{private_DBIx_QueryLog_params} = undef;
 
         unless ($container->{skip_bind} && @params) {
             my $dbh = $sth->{Database};
             $ret = _bind($dbh, $ret, \@params, \@types);
         }
-
-        $sth->{private_DBIx_QueryLog} = undef if $sth->{private_DBIx_QueryLog};
 
         my $begin = [gettimeofday];
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
@@ -130,9 +129,11 @@ sub _st_bind_param {
 
     return sub {
         my ($sth, $p_num, $value, $attr) = @_;
-        $sth->{private_DBIx_QueryLog} ||= [];
+        $sth->{private_DBIx_QueryLog_params} ||= [];
+        $sth->{private_DBIx_QueryLog_attrs } ||= [];
         $attr = +{ TYPE => $attr || 0 } unless ref $attr eq 'HASH';
-        $sth->{private_DBIx_QueryLog}[$p_num - 1] = [$value, $attr];
+        $sth->{private_DBIx_QueryLog_params}[$p_num - 1] = $value;
+        $sth->{private_DBIx_QueryLog_attrs }[$p_num - 1] = $attr;
         $org->(@_);
     };
 }

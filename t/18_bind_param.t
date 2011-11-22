@@ -12,7 +12,6 @@ my $res = capture {
     $sth->bind_param(1, 'foo');
     $sth->bind_param(2, 'hoge');
     $sth->execute;
-    ok !$sth->{private_DBIx_QueryLog}, 'clean';
 };
 
 like $res, qr/SELECT \* FROM sqlite_master WHERE name = 'foo' OR name = 'hoge'/, 'SQL';
