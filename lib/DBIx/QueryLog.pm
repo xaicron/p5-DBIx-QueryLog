@@ -382,11 +382,15 @@ Logged if exceeding this value. (default not set)
 
   DBIx::QueryLog->threshold(0.1); # sec
 
+And, you can also specify C<< DBIX_QUERYLOG_THRESHOLD >> environment variable.
+
 =item probability
 
 Run only once per defined value. (default not set)
 
   DBIx::QueryLog->probability(100); # about 1/100
+
+And, you can also specify C<< DBIX_QUERYLOG_PROBABILITY >> environment variable.
 
 =item logger
 
@@ -403,6 +407,8 @@ If enabled, will be faster, but SQL is not bound.
   DBIx::QueryLog->skip_bind(1);
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
+
+And, you can also specify C<< DBIX_QUERYLOG_SKIP_BIND >> environment variable.
 
 =item color
 
