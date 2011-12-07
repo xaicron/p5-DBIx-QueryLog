@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.23  Thu Dec  8 02:49:36 2011
+    - Supported some more environment variables
+
 0.22  Wed Nov 23 02:08:01 2011
     - Fixed an issue that has not been reused SQL TYPE
 
