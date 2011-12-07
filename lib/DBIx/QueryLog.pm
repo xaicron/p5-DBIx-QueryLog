@@ -94,7 +94,7 @@ sub _st_execute {
         my @params = @_;
         my @types;
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($sth, @params);
         }
@@ -148,7 +148,7 @@ sub _select_array {
         no warnings qw(redefine prototype);
         local *DBI::st::execute = $org_execute; # suppress duplicate logging
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
@@ -188,7 +188,7 @@ sub _db_do {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
-        my $probability = $container->{probability};
+        my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
