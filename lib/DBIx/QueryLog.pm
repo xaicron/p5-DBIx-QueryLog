@@ -109,7 +109,7 @@ sub _st_execute {
         }
         $sth->{private_DBIx_QueryLog_params} = undef;
 
-        unless ($container->{skip_bind} && @params) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @params) {
             my $dbh = $sth->{Database};
             $ret = _bind($dbh, $ret, \@params, \@types);
         }
@@ -154,7 +154,7 @@ sub _select_array {
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
-        unless ($container->{skip_bind} && @bind) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -194,7 +194,7 @@ sub _db_do {
         }
 
         my $ret = $stmt;
-        unless ($container->{skip_bind} && @bind) {
+        unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
 
@@ -253,7 +253,7 @@ sub _logging {
     }
 
     my $sql = $ret;
-    if ($container->{skip_bind}) {
+    if ($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) {
         local $" = ', ';
         $ret .= " : [@$bind_params]" if @$bind_params;
     }

@@ -22,6 +22,7 @@ my $dbh = DBI->connect(
 
 DBIx::QueryLog->begin;
 
+TEST:
 subtest 'do' => sub {
     my $res = capture {
         $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
@@ -39,5 +40,13 @@ subtest 'bind_param' => sub {
 
     like $res, qr/SELECT \* FROM user WHERE User = \? : \[root\]/;
 };
+
+DBIx::QueryLog->skip_bind(0);
+
+unless ($ENV{DBIX_QUERYLOG_SKIP_BIND}) {
+    # enabled skip_bind
+    $ENV{DBIX_QUERYLOG_SKIP_BIND} = 1;
+    goto TEST;
+}
 
 done_testing;
