@@ -238,7 +238,7 @@ sub _bind {
 sub _logging {
     my ($class, $ret, $time, $bind_params) = @_;
 
-    my $threshold = $container->{threshold};
+    my $threshold = $container->{threshold} || $ENV{DBIX_QUERYLOG_THRESHOLD};
     return unless !$threshold || $time > $threshold;
 
     $bind_params ||= [];
