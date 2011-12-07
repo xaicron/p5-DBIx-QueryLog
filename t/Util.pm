@@ -10,6 +10,14 @@ use IO::Handle;
 
 our @EXPORT = qw/capture capture_logger cmpthese/;
 
+BEGIN {
+    # cleanup environment
+    for my $key (keys %ENV) {
+        next unless $key =~ /^DBIX_QUERYLOG_/;
+        delete $ENV{$key};
+    }
+}
+
 sub new_dbh {
     my ($fh, $file) = tempfile;
     my $dbh = DBI->connect("dbi:SQLite:dbname=$file",'','', {
