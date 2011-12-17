@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::Requires 'DBD::SQLite', 'SQL::Tokenizer';
+use Test::Requires 'DBD::SQLite';
 use Test::More;
 use t::Util;
 use DBIx::QueryLog;
