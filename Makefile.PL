@@ -5,6 +5,7 @@ all_from 'lib/DBIx/QueryLog.pm';
 requires 'DBI';
 recommends 'DBD::mysql';
 recommends 'DBD::sqlite';
+recommends 'Text::ASCIITable';
 
 test_requires 'Test::More', 0.96;
 test_requires 'Test::Requires';
