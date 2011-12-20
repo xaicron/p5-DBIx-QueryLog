@@ -23,6 +23,8 @@ my $org_db_selectrow_array    = \&DBI::db::selectrow_array;
 my $has_mysql = eval { require DBD::mysql; 1 } ? 1 : 0;
 my $pp_mode   = $INC{'DBI/PurePerl.pm'} ? 1 : 0;
 
+my $supports_explain = $has_mysql && eval { require Text::ASCIITable; 1 } ? 1 : 0;
+
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
 );
@@ -75,7 +77,7 @@ sub unimport {
 *disable = *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind color useqq compact/) {
+for my $accessor (qw/logger threshold probability skip_bind color useqq compact explain/) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -109,6 +111,12 @@ sub _st_execute {
         }
         $sth->{private_DBIx_QueryLog_params} = undef;
 
+        my $explain;
+        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+            my $dbh = $sth->{Database};
+            $explain = _explain($dbh, $ret, \@params, \@types);
+        }
+
         unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @params) {
             my $dbh = $sth->{Database};
             $ret = _bind($dbh, $ret, \@params, \@types);
@@ -118,7 +126,7 @@ sub _st_execute {
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@params);
+        $class->_logging($ret, $time, \@params, $explain);
 
         return $wantarray ? @$res : $res;
     };
@@ -154,6 +162,12 @@ sub _select_array {
         }
 
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
+
+        my $explain;
+        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+            $explain = _explain($dbh, $ret, \@bind);
+        }
+
         unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
@@ -168,7 +182,7 @@ sub _select_array {
         }
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind);
+        $class->_logging($ret, $time, \@bind, $explain);
 
         if ($is_selectrow_array) {
             return $wantarray ? @$res : $res;
@@ -194,6 +208,12 @@ sub _db_do {
         }
 
         my $ret = $stmt;
+
+        my $explain;
+        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+            $explain = _explain($dbh, $ret, \@bind);
+        }
+
         unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @bind) {
             $ret = _bind($dbh, $ret, \@bind);
         }
@@ -202,9 +222,33 @@ sub _db_do {
         my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind);
+        $class->_logging($ret, $time, \@bind, $explain);
 
         return $wantarray ? @$res : $res;
+    };
+}
+
+sub _explain {
+    my ($dbh, $ret, $params, $types) = @_;
+    $types ||= [];
+
+    if ($dbh->{Driver}{Name} ne 'mysql') {
+        return undef;
+    }
+
+    return sub {
+        no warnings qw(redefine prototype);
+        local *DBI::st::execute = $org_execute; # suppress duplicate logging
+
+        my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
+        my $sth = $dbh->prepare($sql);
+        $sth->execute;
+
+        my $t = Text::ASCIITable->new();
+        $t->setCols(@{$sth->{NAME}});
+        $t->addRow(map { defined($_) ? $_ : 'NULL' } @$_) for @{$sth->fetchall_arrayref};
+
+        return $t;
     };
 }
 
@@ -236,7 +280,7 @@ sub _bind {
 }
 
 sub _logging {
-    my ($class, $ret, $time, $bind_params) = @_;
+    my ($class, $ret, $time, $bind_params, $explain) = @_;
 
     my $threshold = $container->{threshold} || $ENV{DBIX_QUERYLOG_THRESHOLD};
     return unless !$threshold || $time > $threshold;
@@ -317,6 +361,11 @@ sub _logging {
         $localtime, $caller->{pkg}, $time,
         $color ? colored([$color], $ret) : $ret,
         $caller->{file}, $caller->{line};
+
+    if (ref $explain eq 'CODE') {
+        $explain = $explain->();
+        $message .= $color ? colored([$color], $explain) : $explain;
+    }
 
     if (my $logger = $container->{logger}) {
         $logger->log(
@@ -435,6 +484,21 @@ Compaction SQL.
   #  TO  : SELECT * FROM foo WHERE bar = 'baz'
 
 And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
+
+=item explain
+
+Logged Explain. (only supports mysql now)
+
+  DBIx::QueryLog->explain(1);
+  my $row = $dbh->do(...);
+  # => SELECT * FROM peaple WHERE user_id = '1986'
+  #  .----------------------------------------------------------------------------------------------.
+  #  | id | select_type | table  | type  | possible_keys | key     | key_len | ref   | rows | Extra |
+  #  +----+-------------+--------+-------+---------------+---------+---------+-------+------+-------+
+  #  |  1 | SIMPLE      | peaple | const | PRIMARY       | PRIMARY |       4 | const |    1 |       |
+  #  '----+-------------+--------+-------+---------------+---------+---------+-------+------+-------'
+
+And, you can also specify C<< DBIX_QUERYLOG_EXPLAIN >> environment variable.
 
 =back
 
