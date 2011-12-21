@@ -237,12 +237,15 @@ sub _explain {
     }
 
     return sub {
+        my %args = @_;
         no warnings qw(redefine prototype);
         local *DBI::st::execute = $org_execute; # suppress duplicate logging
 
         my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
         my $sth = $dbh->prepare($sql);
         $sth->execute;
+
+        return $sth->fetchall_arrayref(+{}) unless defined $args{print} and $args{print};
 
         my $t = Text::ASCIITable->new();
         $t->setCols(@{$sth->{NAME}});
@@ -362,12 +365,8 @@ sub _logging {
         $color ? colored([$color], $ret) : $ret,
         $caller->{file}, $caller->{line};
 
-    if (ref $explain eq 'CODE') {
-        $explain = $explain->();
-        $message .= $color ? colored([$color], $explain) : $explain;
-    }
-
     if (my $logger = $container->{logger}) {
+        my %explain = ref $explain eq 'CODE' ? (explain => $explain->()) : ();
         $logger->log(
             level   => $LOG_LEVEL,
             message => $message,
@@ -376,12 +375,14 @@ sub _logging {
                 time        => $time,
                 sql         => $sql,
                 bind_params => $bind_params,
+                %explain,
                 %$caller,
             },
         );
     }
     else {
         if (ref $OUTPUT eq 'CODE') {
+            my %explain = ref $explain eq 'CODE' ? (explain => $explain->()) : ();
             $OUTPUT->(
                 level       => $LOG_LEVEL,
                 message     => $message,
@@ -389,11 +390,12 @@ sub _logging {
                 time        => $time,
                 sql         => $sql,
                 bind_params => $bind_params,
+                %explain,
                 %$caller,
             );
         }
         else {
-            print {$OUTPUT} $message;
+            print {$OUTPUT} $message, ref $explain eq 'CODE' ? $explain->(print => 1) : ();
         }
     }
 }

@@ -61,6 +61,27 @@ for my $method (qw/selectrow_array selectrow_arrayref selectall_arrayref/) {
     };
 }
 
+subtest 'logger' => sub {
+    DBIx::QueryLog->logger(t::Util->new_logger);
+
+    my $res = capture_logger {
+        $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+    };
+
+    ok exists $res->{explain}, 'explain is exists';
+
+    DBIx::QueryLog->logger(undef);
+};
+
+subtest 'output' => sub {
+    my %params;
+    local $DBIx::QueryLog::OUTPUT = sub { %params = @_ };
+
+    $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+
+    ok exists $params{explain}, 'explain is exists';
+};
+
 DBIx::QueryLog->explain(0);
 
 unless ($ENV{DBIX_QUERYLOG_EXPLAIN}) {
