@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::Requires qw(DBD::mysql Test::mysqld);
+use Test::Requires qw(DBD::mysql Test::mysqld Text::ASCIITable);
 use Test::More;
 use Test::mysqld;
 use t::Util;
@@ -60,6 +60,27 @@ for my $method (qw/selectrow_array selectrow_arrayref selectall_arrayref/) {
         like $res, qr/$regex/;
     };
 }
+
+subtest 'logger' => sub {
+    DBIx::QueryLog->logger(t::Util->new_logger);
+
+    my $res = capture_logger {
+        $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+    };
+
+    ok exists $res->{explain}, 'explain is exists';
+
+    DBIx::QueryLog->logger(undef);
+};
+
+subtest 'output' => sub {
+    my %params;
+    local $DBIx::QueryLog::OUTPUT = sub { %params = @_ };
+
+    $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+
+    ok exists $params{explain}, 'explain is exists';
+};
 
 DBIx::QueryLog->explain(0);
 
