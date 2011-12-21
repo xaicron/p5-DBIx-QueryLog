@@ -366,7 +366,7 @@ sub _logging {
         $caller->{file}, $caller->{line};
 
     if (my $logger = $container->{logger}) {
-        my %explain = ref $explain eq 'CODE' ? (explain => $explain->()) : ();
+        my %explain = $explain ? (explain => $explain->()) : ();
         $logger->log(
             level   => $LOG_LEVEL,
             message => $message,
@@ -382,7 +382,7 @@ sub _logging {
     }
     else {
         if (ref $OUTPUT eq 'CODE') {
-            my %explain = ref $explain eq 'CODE' ? (explain => $explain->()) : ();
+            my %explain = $explain ? (explain => $explain->()) : ();
             $OUTPUT->(
                 level       => $LOG_LEVEL,
                 message     => $message,
@@ -395,7 +395,7 @@ sub _logging {
             );
         }
         else {
-            print {$OUTPUT} $message, ref $explain eq 'CODE' ? $explain->(print => 1) : ();
+            print {$OUTPUT} $message, $explain ? $explain->(print => 1) : ();
         }
     }
 }
