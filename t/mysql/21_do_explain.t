@@ -82,6 +82,19 @@ subtest 'output' => sub {
     ok exists $params{explain}, 'explain is exists';
 };
 
+
+subtest 'select only' => sub {
+    my $res = capture {
+        $dbh->do('CREATE TEMPORARY TABLE __explain(id int)');
+        $dbh->do('INSERT INTO __explain VALUES (1),(2),(3)');
+        $dbh->do('UPDATE __explain SET id = 0');
+        $dbh->do('DELETE FROM __explain');
+        $dbh->do('DROP TABLE __explain');
+    };
+
+    unlike $res, qr/$regex/;
+};
+
 DBIx::QueryLog->explain(0);
 
 unless ($ENV{DBIX_QUERYLOG_EXPLAIN}) {

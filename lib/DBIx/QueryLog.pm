@@ -236,6 +236,13 @@ sub _explain {
         return undef;
     }
 
+    return undef unless $ret =~ m|^
+        \s*                # white space
+        (?: /\* .*? \*/ )* # /* ... */
+        \s*                # while space
+        SELECT
+    |ixms;
+
     return sub {
         my %args = @_;
         no warnings qw(redefine prototype);
@@ -488,6 +495,8 @@ Compaction SQL.
 And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
 =item explain
+
+B<< EXPERIMENTAL >>
 
 Logged Explain. (only supports mysql now)
 
