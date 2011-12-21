@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.24  Thu Dec 22 01:26:51 2011
+    - Support explain option (kamipo++)
+
 0.23  Thu Dec  8 02:49:36 2011
     - Supported some more environment variables
 
