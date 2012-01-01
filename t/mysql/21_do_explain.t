@@ -95,6 +95,15 @@ subtest 'select only' => sub {
     unlike $res, qr/$regex/;
 };
 
+subtest 'select exclusive' => sub {
+    my $res = capture {
+        $dbh->do('SELECT SQL_CALC_FOUND_ROWS * FROM user');
+        $dbh->do('SELECT FOUND_ROWS()');
+    };
+
+    unlike $res, qr/$regex/;
+};
+
 DBIx::QueryLog->explain(0);
 
 unless ($ENV{DBIX_QUERYLOG_EXPLAIN}) {
