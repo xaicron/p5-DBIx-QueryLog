@@ -243,6 +243,15 @@ sub _explain {
         SELECT
     |ixms;
 
+    return undef if $ret =~ m|
+        \s*                         # white space
+        (?:
+            SQL_CALC_FOUND_ROWS \|  # exclusive MySQL funciton
+            FOUND_ROWS\(\)
+        )
+        \s*                         # white space
+    |ixms;
+
     return sub {
         my %args = @_;
         no warnings qw(redefine prototype);
