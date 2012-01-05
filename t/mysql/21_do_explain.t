@@ -95,6 +95,16 @@ subtest 'select only' => sub {
     unlike $res, qr/$regex/;
 };
 
+subtest 'found_rows' => sub {
+    my $found_rows;
+    my $res = capture {
+        $dbh->do('SELECT * FROM user WHERE User = ?', undef, 'root');
+        $found_rows = $dbh->selectrow_array('SELECT FOUND_ROWS()');
+    };
+
+    cmp_ok $found_rows, '>', 0;
+};
+
 DBIx::QueryLog->explain(0);
 
 unless ($ENV{DBIX_QUERYLOG_EXPLAIN}) {
