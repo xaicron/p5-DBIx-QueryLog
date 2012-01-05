@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.25  Fri Jan  6 00:13:11 2012
+    - Fix: skip explain unless "select ... from" for FOUND_ROWS() (kamipo++)
+
 0.24  Thu Dec 22 01:26:51 2011
     - Support explain option (kamipo++)
 
