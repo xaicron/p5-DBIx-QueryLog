@@ -241,16 +241,22 @@ sub _explain {
         (?: /\* .*? \*/ )* # /* ... */
         \s*                # while space
         SELECT
+        \s*                # white space
+        .+?                # columns
+        \s*                # white space
+        FROM
+        \s*                # white space
     |ixms;
+
+    no warnings qw(redefine prototype);
+    local *DBI::st::execute = $org_execute; # suppress duplicate logging
+
+    my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
+    my $sth = $dbh->prepare($sql);
+    $sth->execute;
 
     return sub {
         my %args = @_;
-        no warnings qw(redefine prototype);
-        local *DBI::st::execute = $org_execute; # suppress duplicate logging
-
-        my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
-        my $sth = $dbh->prepare($sql);
-        $sth->execute;
 
         return $sth->fetchall_arrayref(+{}) unless defined $args{print} and $args{print};
 
