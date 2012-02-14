@@ -506,6 +506,8 @@ B<< EXPERIMENTAL >>
 
 Logged Explain. (only supports mysql now)
 
+This feature requires C<< Text::ASCIITable >> installed.
+
   DBIx::QueryLog->explain(1);
   my $row = $dbh->do(...);
   # => SELECT * FROM peaple WHERE user_id = '1986'
