@@ -578,6 +578,16 @@ Default C<< $OUTPUT >> is C<< STDERR >>.
 
 xaicron E<lt>xaicron {at} cpan.orgE<gt>
 
+=head1 THANKS TO
+
+tokuhitom
+
+yibe
+
+kamipo
+
+tomi-ru
+
 =head1 COPYRIGHT
 
 Copyright 2010 - xaicron
