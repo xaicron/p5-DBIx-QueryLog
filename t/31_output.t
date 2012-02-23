@@ -22,14 +22,14 @@ sub test_params {
         is_deeply $params{bind_params}, $bind, 'bind_params';
 
         if ($opts{skip_bind}) {
-            is $params{message}, sprintf("[%s] [%s] [%s] %s : [%s] at %s line %s\n",
-                @params{qw/localtime pkg time sql/}, join(',', @{$params{bind_params}}),
+            is $params{message}, sprintf("[%s] [%s] [%s] [%s] %s : [%s] at %s line %s\n",
+                @params{qw/localtime pkg time data_sources sql/}, join(',', @{$params{bind_params}}),
                 @params{qw/file line/},
             ), 'message';
         }
         else {
-            is $params{message}, sprintf("[%s] [%s] [%s] %s at %s line %s\n",
-                @params{qw/localtime pkg time sql file line/}
+            is $params{message}, sprintf("[%s] [%s] [%s] [%s] %s at %s line %s\n",
+                @params{qw/localtime pkg time data_sources sql file line/}
             ), 'message';
         }
     };
