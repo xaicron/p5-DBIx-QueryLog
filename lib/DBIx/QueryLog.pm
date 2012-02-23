@@ -126,7 +126,7 @@ sub _st_execute {
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@params, $explain);
+        $class->_logging($ret, $time, \@params, $explain, $sth->{Database}->{Driver}->{Name}, $sth->{Database}->{Name});
 
         return $wantarray ? @$res : $res;
     };
@@ -182,7 +182,7 @@ sub _select_array {
         }
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind, $explain);
+        $class->_logging($ret, $time, \@bind, $explain, $dbh->{Driver}->{Name}, $dbh->{Name});
 
         if ($is_selectrow_array) {
             return $wantarray ? @$res : $res;
@@ -222,7 +222,7 @@ sub _db_do {
         my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind, $explain);
+        $class->_logging($ret, $time, \@bind, $explain, $dbh->{Driver}->{Name}, $dbh->{Name});
 
         return $wantarray ? @$res : $res;
     };
@@ -296,7 +296,7 @@ sub _bind {
 }
 
 sub _logging {
-    my ($class, $ret, $time, $bind_params, $explain) = @_;
+    my ($class, $ret, $time, $bind_params, $explain, $driver, $name) = @_;
 
     my $threshold = $container->{threshold} || $ENV{DBIX_QUERYLOG_THRESHOLD};
     return unless !$threshold || $time > $threshold;
@@ -373,8 +373,9 @@ sub _logging {
         my ($sec, $min, $hour, $day, $mon, $year) = localtime;
         sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
     };
-    my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
-        $localtime, $caller->{pkg}, $time,
+    my $data_sources = "$driver:$name";
+    my $message = sprintf "[%s] [%s] [%s] [%s] %s at %s line %s\n",
+        $localtime, $caller->{pkg}, $time, $data_sources,
         $color ? colored([$color], $ret) : $ret,
         $caller->{file}, $caller->{line};
 
@@ -384,10 +385,11 @@ sub _logging {
             level   => $LOG_LEVEL,
             message => $message,
             params  => {
-                localtime   => $localtime,
-                time        => $time,
-                sql         => $sql,
-                bind_params => $bind_params,
+                localtime    => $localtime,
+                time         => $time,
+                sql          => $sql,
+                bind_params  => $bind_params,
+                data_sources => $data_sources,
                 %explain,
                 %$caller,
             },
@@ -397,12 +399,13 @@ sub _logging {
         if (ref $OUTPUT eq 'CODE') {
             my %explain = $explain ? (explain => $explain->()) : ();
             $OUTPUT->(
-                level       => $LOG_LEVEL,
-                message     => $message,
-                localtime   => $localtime,
-                time        => $time,
-                sql         => $sql,
-                bind_params => $bind_params,
+                level        => $LOG_LEVEL,
+                message      => $message,
+                localtime    => $localtime,
+                time         => $time,
+                sql          => $sql,
+                bind_params  => $bind_params,
+                data_sources => $data_sources,
                 %explain,
                 %$caller,
             );
