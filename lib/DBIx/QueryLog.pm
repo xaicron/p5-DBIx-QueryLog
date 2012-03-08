@@ -77,7 +77,10 @@ sub unimport {
 *disable = *end   = \&unimport;
 
 my $container = {};
-for my $accessor (qw/logger threshold probability skip_bind color useqq compact explain/) {
+for my $accessor (qw{
+    logger threshold probability skip_bind
+    color useqq compact explain show_data_source
+}) {
     no strict 'refs';
     *{__PACKAGE__."::$accessor"} = sub {
         use strict 'refs';
@@ -101,6 +104,7 @@ sub _st_execute {
             return $org->($sth, @params);
         }
 
+        my $dbh = $sth->{Database};
         my $ret = $sth->{Statement};
         if (my $attrs = $sth->{private_DBIx_QueryLog_attrs}) {
             my $bind_params = $sth->{private_DBIx_QueryLog_params};
@@ -113,12 +117,10 @@ sub _st_execute {
 
         my $explain;
         if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
-            my $dbh = $sth->{Database};
             $explain = _explain($dbh, $ret, \@params, \@types);
         }
 
         unless (($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) && @params) {
-            my $dbh = $sth->{Database};
             $ret = _bind($dbh, $ret, \@params, \@types);
         }
 
@@ -126,7 +128,7 @@ sub _st_execute {
         my $res = $wantarray ? [$org->($sth, @_)] : scalar $org->($sth, @_);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@params, $explain);
+        $class->_logging($dbh, $ret, $time, \@params, $explain);
 
         return $wantarray ? @$res : $res;
     };
@@ -182,7 +184,7 @@ sub _select_array {
         }
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind, $explain);
+        $class->_logging($dbh, $ret, $time, \@bind, $explain);
 
         if ($is_selectrow_array) {
             return $wantarray ? @$res : $res;
@@ -222,7 +224,7 @@ sub _db_do {
         my $res = $wantarray ? [$org->($dbh, $stmt, $attr, @bind)] : scalar $org->($dbh, $stmt, $attr, @bind);
         my $time = sprintf '%.6f', tv_interval $begin, [gettimeofday];
 
-        $class->_logging($ret, $time, \@bind, $explain);
+        $class->_logging($dbh, $ret, $time, \@bind, $explain);
 
         return $wantarray ? @$res : $res;
     };
@@ -296,7 +298,7 @@ sub _bind {
 }
 
 sub _logging {
-    my ($class, $ret, $time, $bind_params, $explain) = @_;
+    my ($class, $dbh, $ret, $time, $bind_params, $explain) = @_;
 
     my $threshold = $container->{threshold} || $ENV{DBIX_QUERYLOG_THRESHOLD};
     return unless !$threshold || $time > $threshold;
@@ -373,8 +375,10 @@ sub _logging {
         my ($sec, $min, $hour, $day, $mon, $year) = localtime;
         sprintf '%d-%02d-%02dT%02d:%02d:%02d', $year + 1900, $mon + 1, $day, $hour, $min, $sec;
     };
-    my $message = sprintf "[%s] [%s] [%s] %s at %s line %s\n",
+    my $data_source = "$dbh->{Driver}{Name}:$dbh->{Name}";
+    my $message = sprintf "[%s] [%s] [%s] %s%s at %s line %s\n",
         $localtime, $caller->{pkg}, $time,
+        $container->{show_data_source} || $ENV{DBIX_QUERYLOG_SHOW_DATASOURCE} ? "[$data_source] " : '',
         $color ? colored([$color], $ret) : $ret,
         $caller->{file}, $caller->{line};
 
@@ -384,10 +388,12 @@ sub _logging {
             level   => $LOG_LEVEL,
             message => $message,
             params  => {
+                dbh         => $dbh,
                 localtime   => $localtime,
                 time        => $time,
                 sql         => $sql,
                 bind_params => $bind_params,
+                data_source => $data_source,
                 %explain,
                 %$caller,
             },
@@ -397,12 +403,14 @@ sub _logging {
         if (ref $OUTPUT eq 'CODE') {
             my %explain = $explain ? (explain => $explain->()) : ();
             $OUTPUT->(
+                dbh         => $dbh,
                 level       => $LOG_LEVEL,
                 message     => $message,
                 localtime   => $localtime,
                 time        => $time,
                 sql         => $sql,
                 bind_params => $bind_params,
+                data_source => $data_source,
                 %explain,
                 %$caller,
             );
@@ -519,6 +527,19 @@ This feature requires C<< Text::ASCIITable >> installed.
 
 And, you can also specify C<< DBIX_QUERYLOG_EXPLAIN >> environment variable.
 
+=item show_data_source
+
+if enabled, added DBI data_source in default message.
+
+  $dbh->do('SELECT * FROM sqlite_master');
+  # [2012-03-09T00:58:23] [main] [0.000953] SELECT * FROM sqlite_master at foo.pl line 34
+
+  DBIx::QueryLog->show_data_source(1);
+  $dbh->do('SELECT * FROM sqlite_master');
+  # [2012-03-09T00:58:23] [main] [0.000953] [SQLite:dbname=/tmp/TrSATdY3cc] SELECT * FROM sqlite_master at foo.pl line 56
+
+And, you can also specify C<< DBIX_QUERYLOG_SHOW_DATASOURCE >> environment variable.
+
 =back
 
 =head1 TIPS
@@ -559,6 +580,7 @@ or you can specify code reference:
   localtime  : %s       # ISO-8601 without timezone
   level      : %s       # log level ($DBIx::QueryLog::LOG_LEVEL)
   time       : %f       # elasped time
+  data_source: $s       # data_source
   sql        : %s       # executed query
   bind_params: %s       # bind parameters
   pkg        : %s       # caller package
@@ -567,9 +589,11 @@ or you can specify code reference:
   FORMAT
 
       printf $format,
-          @params{qw/localtime level pkg time sql/},
+          @params{qw/localtime level pkg time data_source sql/},
           join(', ', @{$params{bind_params}}),
           @params{qw/file line/};
+
+      printf "AutoCommit?: %d\n", $params->{dbh}->{AutoCommit} ? 1 : 0;
   };
 
 Default C<< $OUTPUT >> is C<< STDERR >>.
@@ -580,7 +604,7 @@ xaicron E<lt>xaicron {at} cpan.orgE<gt>
 
 =head1 THANKS TO
 
-tokuhitom
+tokuhirom
 
 yibe
 

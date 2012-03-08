@@ -38,3 +38,8 @@ useqq
 # personal section
 xaicron
 xaicron {at} cpan.org
+
+tokuhirom
+kamipo
+tomi-ru
+yibe
