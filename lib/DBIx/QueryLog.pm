@@ -612,6 +612,8 @@ kamipo
 
 tomi-ru
 
+riywo
+
 =head1 COPYRIGHT
 
 Copyright 2010 - xaicron
