@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.27  Sat Mar 10 02:20:42 2012
+    - Support show_data_source option (riywo++)
+
 0.26  Wed Feb 15 00:45:59 2012
     - added notes for explain option, no code changes (tomi-ru++)
 
