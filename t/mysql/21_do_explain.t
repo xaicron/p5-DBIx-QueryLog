@@ -82,6 +82,26 @@ subtest 'output' => sub {
     ok exists $params{explain}, 'explain is exists';
 };
 
+subtest 'with comment' => sub {
+    my $res = capture {
+        $dbh->do(<<SQL, undef, 'root');
+/* comment1 /* */ /* comment2 */
+SELECT /* comment3 */ * /* comment4 /* */
+FROM
+user WHERE User = ? /* comment5 */
+SQL
+    };
+
+    like $res, qr/$regex/;
+};
+
+subtest 'another SELECT statement into comment' => sub {
+    my $res = capture {
+        $dbh->do('/* SELECT * FROM foo WHERE bar = "baz" */ SELECT * FROM user WHERE User = ?', undef, 'root');
+    };
+
+    like $res, qr/$regex/;
+};
 
 subtest 'select only' => sub {
     my $res = capture {

@@ -238,16 +238,19 @@ sub _explain {
         return undef;
     }
 
-    return undef unless $ret =~ m|^
-        \s*                # white space
-        (?: /\* .*? \*/ )* # /* ... */
-        \s*                # while space
+    return undef unless $ret =~ m|
+        \A                     # at start of string
+        (?:
+            \s*                # white space
+            (?: /\* .*? \*/ )* # /* ... */
+            \s*                # while space
+        )*
         SELECT
-        \s*                # white space
-        .+?                # columns
-        \s*                # white space
+        \s*                    # white space
+        .+?                    # columns
+        \s*                    # white space
         FROM
-        \s*                # white space
+        \s*                    # white space
     |ixms;
 
     no warnings qw(redefine prototype);
