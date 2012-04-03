@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.28  Tue Apr  3 22:53:44 2012
+    - Fixed regexp for explain
+
 0.27  Sat Mar 10 02:20:42 2012
     - Support show_data_source option (riywo++)
 
