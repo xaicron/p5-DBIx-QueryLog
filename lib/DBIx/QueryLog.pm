@@ -234,11 +234,8 @@ sub _explain {
     my ($dbh, $ret, $params, $types) = @_;
     $types ||= [];
 
-    if ($dbh->{Driver}{Name} ne 'mysql') {
-        return undef;
-    }
-
-    return undef unless $ret =~ m|
+    return if $dbh->{Driver}{Name} ne 'mysql';
+    return unless $ret =~ m|
         \A                     # at start of string
         (?:
             \s*                # white space
