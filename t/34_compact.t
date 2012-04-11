@@ -32,4 +32,29 @@ my $expects = quotemeta join ' ',
 
 like $res, qr/$expects/, 'sql ok';
 
+if (eval { require Test::mysqld; 1 }) {
+    DBIx::QueryLog->end;
+    if (my $mysqld = t::Util->setup_mysqld) {
+        my $dbh = DBI->connect(
+            $mysqld->dsn(dbname => 'mysql'), '', '',
+            {
+                AutoCommit => 1,
+                RaiseError => 1,
+            },
+        ) or die $DBI::errstr;
+        $dbh->do(<< 'SQL');
+CREATE TABLE `___test` (
+    `f  oo` int(10)
+)
+SQL
+
+        DBIx::QueryLog->begin;
+        my $stmt = 'SELECT `f  oo` FROM ___test';
+        my $ret = capture {
+            $dbh->do($stmt);
+        };
+        like $ret, qr/$stmt/;
+    }
+}
+
 done_testing;

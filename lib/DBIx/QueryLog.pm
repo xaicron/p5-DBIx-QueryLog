@@ -336,7 +336,7 @@ sub _logging {
                 $skip_space = 1;
                 next;
             }
-            elsif ($s eq q{'} || $s eq q{"}) {
+            elsif ($s eq q{'} || $s eq q{"} || $s eq q{`}) {
                 unless ($quote_char) {
                     $quote_char = $s;
                 }
