@@ -554,6 +554,26 @@ if enabled, added DBI data_source in default message.
 
 And, you can also specify C<< DBIX_QUERYLOG_SHOW_DATASOURCE >> environment variable.
 
+=item guard
+
+Returned guard object.
+
+  use DBIx::QueryLog ();
+  {
+      my $guard = DBIx::QueryLog->guard;
+      # ... do something
+  }
+
+This code same as are:
+
+  use DBIx::QueryLog ();
+  
+  DBIx::QueryLog->enable;
+  # ... do something
+  DBIx::QueryLog->disable;
+
+SEE ALSO L<< Localization >> section.
+
 =back
 
 =head1 TIPS
