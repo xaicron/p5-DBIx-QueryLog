@@ -76,6 +76,11 @@ sub unimport {
 *enable  = *begin = \&import;
 *disable = *end   = \&unimport;
 
+sub guard {
+    DBIx::QueryLog->enable();
+    return DBIx::QueryLog::Guard->new();
+}
+
 my $container = {};
 for my $accessor (qw{
     logger threshold probability skip_bind
@@ -418,6 +423,15 @@ sub _logging {
         else {
             print {$OUTPUT} $message, $explain ? $explain->(print => 1) : ();
         }
+    }
+}
+
+{
+    package # hide from pause
+        DBIx::QueryLog::Guard;
+    sub new { bless [], shift }
+    sub DESTROY {
+        DBIx::QueryLog->disable();
     }
 }
 
