@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.29  Tue Oct 16 15:31:36 2012
+    - Added guard method (tokuhitom++)
+
 0.28  Tue Apr  3 22:53:44 2012
     - Fixed regexp for explain
 
