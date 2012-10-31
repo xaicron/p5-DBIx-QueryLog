@@ -16,9 +16,12 @@ author_tests 'xt';
 repository 'https://github.com/xaicron/p5-DBIx-QueryLog';
 bugtracker 'https://github.com/xaicron/p5-DBIx-QueryLog/issues';
 
-if (can_use 'Test::mysqld' and can_use 'JSON') {
+if ((can_use 'Test::mysqld' or can_use 'Test::PostgreSQL') and can_use 'JSON') {
+    my @pls;
+    push @pls, 't/setup_mysqld.pl'     if can_use 'Test::mysqld';
+    push @pls, 't/setup_postgresql.pl' if can_use 'Test::PostgreSQL';
     default_test_target(
-        run_on_prepare => 't/setup_mysqld.pl',
+        run_on_prepare => \@pls,
     );
 }
 
