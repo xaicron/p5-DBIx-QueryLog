@@ -120,7 +120,7 @@ sub _st_execute {
             }
         }
         # DBD::Pg::st warns "undef in subroutine"
-        $sth->{private_DBIx_QueryLog_params} = $dbh->{Driver}{Name} ne 'Pg' ? '' : undef;
+        $sth->{private_DBIx_QueryLog_params} = $dbh->{Driver}{Name} eq 'Pg' ? '' : undef;
 
         my $explain;
         if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
