@@ -34,17 +34,56 @@ sub new_logger {
 sub setup_mysqld {
     eval { require Test::mysqld; 1 } or return;
     my $mysqld;
-    if (my $json = $ENV{__TEST_DBIxQueryLog}) {
+    my $json = $ENV{__TEST_DBIxQueryLog};
+    my $obj;
+    if ($json) {
         eval { require JSON; 1 } or return;
-        my $obj = JSON::decode_json($json);
-        $mysqld = bless $obj, 'Test::mysqld';
+        $obj = JSON::decode_json($json);
+    }
+
+    if ($obj && $obj->{mysql}) {
+        $mysqld = bless $obj->{mysql}, 'Test::mysqld';
     }
     else {
         $mysqld = Test::mysqld->new(my_cnf => {
             'skip-networking' => '',
         }) or return;
     }
+
     return $mysqld;
+}
+
+sub setup_postgresql {
+    eval { require Test::PostgreSQL; Test::PostgreSQL->VERSION >= 0.1 } or return;
+    my $pg;
+    my $json = $ENV{__TEST_DBIxQueryLog};
+    my $obj;
+    if ($json) {
+        eval { require JSON; 1 } or return;
+        $obj = JSON::decode_json($json);
+    }
+
+    if ($obj && $obj->{pg}) {
+        use Data::Dumper; print Dumper($obj);
+        $pg = bless $obj->{pg}, 'Test::PostgreSQL';
+    }
+    else {
+        $pg = Test::PostgreSQL->new() or return;
+        my $dbh = DBI->connect(
+            $pg->dsn(dbname => 'test'), '', '',
+            {
+                AutoCommit => 1,
+                RaiseError => 1,
+            },
+        ) or die $DBI::errstr;
+        # mysql tests use the "user" table name and Pg's "user" is a function.
+        # so we don't use table name "user" without quotaion marks in pg tests.
+        # but mendo-kusai node sonnomama ni sita.
+        $dbh->do('CREATE TABLE "user" ("User" text)');
+        $dbh->disconnect;
+    }
+
+    return $pg;
 }
 
 sub capture(&) {
