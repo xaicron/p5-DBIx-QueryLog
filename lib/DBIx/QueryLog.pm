@@ -21,6 +21,7 @@ my $org_db_selectrow_arrayref = \&DBI::db::selectrow_arrayref;
 my $org_db_selectrow_array    = \&DBI::db::selectrow_array;
 
 my $has_mysql = eval { require DBD::mysql; 1 } ? 1 : 0;
+my $has_pg    = eval { require DBD::Pg; 1 }    ? 1 : 0;
 my $pp_mode   = $INC{'DBI/PurePerl.pm'} ? 1 : 0;
 
 my $supports_explain = $has_mysql && eval { require Text::ASCIITable; 1 } ? 1 : 0;
@@ -43,7 +44,7 @@ sub import {
 
     $st_execute    ||= $class->_st_execute($org_execute);
     $st_bind_param ||= $class->_st_bind_param($org_bind_param);
-    $db_do         ||= $class->_db_do($org_db_do) if $has_mysql;
+    $db_do         ||= $class->_db_do($org_db_do) if $has_mysql or $has_pg;
     unless ($pp_mode) {
         $selectall_arrayref ||= $class->_select_array($org_db_selectall_arrayref);
         $selectrow_arrayref ||= $class->_select_array($org_db_selectrow_arrayref);
@@ -53,7 +54,7 @@ sub import {
     no warnings qw(redefine prototype);
     *DBI::st::execute    = $st_execute;
     *DBI::st::bind_param = $st_bind_param;
-    *DBI::db::do         = $db_do if $has_mysql;
+    *DBI::db::do         = $db_do if $has_mysql or $has_pg;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $selectall_arrayref;
         *DBI::db::selectrow_arrayref = $selectrow_arrayref;
@@ -65,7 +66,7 @@ sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute    = $org_execute;
     *DBI::st::bind_param = $org_bind_param;
-    *DBI::db::do         = $org_db_do if $has_mysql;
+    *DBI::db::do         = $org_db_do if $has_mysql or $has_pg;
     unless ($pp_mode) {
         *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
         *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
@@ -118,7 +119,8 @@ sub _st_execute {
                 push @params, $bind_params->[$i - 1] if $bind_params;
             }
         }
-        $sth->{private_DBIx_QueryLog_params} = undef;
+        # DBD::Pg::st warns "undef in subroutine"
+        $sth->{private_DBIx_QueryLog_params} = $dbh->{Driver}{Name} eq 'Pg' ? '' : undef;
 
         my $explain;
         if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
@@ -205,7 +207,7 @@ sub _db_do {
         my $wantarray = wantarray ? 1 : 0;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
-        if ($dbh->{Driver}{Name} ne 'mysql') {
+        if ($dbh->{Driver}{Name} ne 'mysql' && $dbh->{Driver}{Name} ne 'Pg') {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
@@ -239,7 +241,7 @@ sub _explain {
     my ($dbh, $ret, $params, $types) = @_;
     $types ||= [];
 
-    return if $dbh->{Driver}{Name} ne 'mysql';
+    return if $dbh->{Driver}{Name} ne 'mysql' and $dbh->{Driver}{Name} ne 'Pg';
     return unless $ret =~ m|
         \A                     # at start of string
         (?:
@@ -278,9 +280,8 @@ sub _explain {
 sub _bind {
     my ($dbh, $ret, $params, $types) = @_;
     $types ||= [];
-
     my $i = 0;
-    if ($dbh->{Driver}{Name} eq 'mysql') {
+    if ($dbh->{Driver}{Name} eq 'mysql' or $dbh->{Driver}{Name} eq 'Pg') {
         my $limit_flag = 0;
         $ret =~ s{([?)])}{
             if ($1 eq '?') {
@@ -288,7 +289,16 @@ sub _bind {
                     my $pos = pos $ret;
                     ($pos >= 6 && substr($ret, $pos - 6, 6) =~ /\A[Ll](?:IMIT|imit) \z/) ? 1 : 0;
                 };
-                $limit_flag ? $params->[$i++] : $dbh->quote($params->[$i], $types->[$i++]);
+                if ($limit_flag) {
+                    $params->[$i++]
+                }
+                else {
+                    my $type = $types->[$i];
+                    if (defined $type and $dbh->{Driver}{Name} eq 'Pg' and $type == 0) {
+                        $type = undef;
+                    }
+                    $dbh->quote($params->[$i++], defined $type ? $type : ());
+                }
             }
             elsif ($1 eq ')') {
                 $limit_flag = 0;
