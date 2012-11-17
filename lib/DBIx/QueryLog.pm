@@ -466,7 +466,7 @@ DBIx::QueryLog - Logging queries for DBI
 
 DBIx::QueryLog is logs each execution time and the actual query.
 
-Currently, works on DBD::mysql and DBD::sqlite.
+Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
 =head1 CLASS METHODS
 
@@ -536,7 +536,7 @@ And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
 B<< EXPERIMENTAL >>
 
-Logged Explain. (only supports mysql now)
+Logged Explain. (only supports mysql, PostgreSQL is incompletly supported)
 
 This feature requires C<< Text::ASCIITable >> installed.
 
