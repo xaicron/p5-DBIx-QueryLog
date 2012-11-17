@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.31  Sat Nov 17 19:14:01 2012
+    - Fixed Pg tests (makamaka)
+
 0.30  Sun Nov 11 20:46:24 2012
     - Support PostgreSQL (makamaka++)
 
