@@ -1,14 +1,14 @@
 use strict;
 use warnings;
-use Test::Requires qw(DBD::Pg Test::postgresql);
+use Test::Requires qw(DBD::Pg Test::PostgreSQL);
 use Test::More;
-use Test::postgresql;
+use Test::PostgreSQL;
 use t::Util;
 use DBIx::QueryLog ();
 use DBI qw(:sql_types);
 
 my $pg = t::Util->setup_postgresql
-    or plan skip_all => $Test::postgresql::errstr || 'failed setup_postgresql';
+    or plan skip_all => $Test::PostgreSQL::errstr || 'failed setup_postgresql';
 
 my $dbh = DBI->connect(
     $pg->dsn(dbname => 'test'), '', '',
