@@ -39,6 +39,8 @@ my $selectall_arrayref;
 my $selectrow_arrayref;
 my $selectrow_array;
 
+my $is_enabled = 0;
+
 sub import {
     my ($class) = @_;
 
@@ -60,6 +62,8 @@ sub import {
         *DBI::db::selectrow_arrayref = $selectrow_arrayref;
         *DBI::db::selectrow_array    = $selectrow_array;
     }
+
+    $is_enabled = 1;
 }
 
 sub unimport {
@@ -72,6 +76,8 @@ sub unimport {
         *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
         *DBI::db::selectrow_array    = $org_db_selectrow_array;
     }
+
+    $is_enabled = 0;
 }
 
 *enable  = *begin = \&import;
@@ -81,6 +87,8 @@ sub guard {
     DBIx::QueryLog->enable();
     return DBIx::QueryLog::Guard->new();
 }
+
+sub is_enabled { $is_enabled }
 
 my $container = {};
 for my $accessor (qw{
@@ -580,6 +588,16 @@ This code same as are:
   
   DBIx::QueryLog->enable;
   # ... do something
+  DBIx::QueryLog->disable;
+
+=item is_enabled
+
+Return true or false
+
+  use DBIx::QueryLog ();
+
+  say DBIx::QueryLog->is_enabled;
+
   DBIx::QueryLog->disable;
 
 SEE ALSO L<< Localization >> section.
