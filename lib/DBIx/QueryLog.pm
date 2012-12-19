@@ -536,7 +536,7 @@ And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
 B<< EXPERIMENTAL >>
 
-Logged Explain. (only supports mysql, PostgreSQL is incompletly supported)
+Logged Explain. (only supports mysql, PostgreSQL is incompletely supported)
 
 This feature requires C<< Text::ASCIITable >> installed.
 

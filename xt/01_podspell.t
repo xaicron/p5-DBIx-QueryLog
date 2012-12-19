@@ -34,6 +34,7 @@ DBI
 SQL
 params
 useqq
+PostgreSQL
 
 # personal section
 xaicron
