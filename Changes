@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.32  Wed Dec 19 18:29:20 2012
+    - Added is_enabled()
+
 0.31  Sat Nov 17 19:14:01 2012
     - Fixed Pg tests (makamaka)
 
