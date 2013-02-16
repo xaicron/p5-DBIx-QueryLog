@@ -1,5 +1,8 @@
 Revision history for Perl extension DBIx::QueryLog
 
+0.33  Sat Feb 16 18:24:54 2013
+    - Added ignore_trace()
+
 0.32  Wed Dec 19 18:29:20 2012
     - Added is_enabled()
 
