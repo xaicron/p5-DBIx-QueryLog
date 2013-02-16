@@ -84,8 +84,15 @@ sub unimport {
 *disable = *end   = \&unimport;
 
 sub guard {
+    my $org_is_enabled = DBIx::QueryLog->is_enabled;
     DBIx::QueryLog->enable();
-    return DBIx::QueryLog::Guard->new();
+    return DBIx::QueryLog::Guard->new($org_is_enabled);
+}
+
+sub ignore_trace {
+    my $org_is_enabled = DBIx::QueryLog->is_enabled;
+    DBIx::QueryLog->disable();
+    return DBIx::QueryLog::Guard->new($org_is_enabled);
 }
 
 sub is_enabled { $is_enabled }
@@ -106,7 +113,7 @@ for my $accessor (qw{
 
 sub _st_execute {
     my ($class, $org) = @_;
-    
+
     return sub {
         my $wantarray = wantarray ? 1 : 0;
         my $sth = shift;
@@ -447,9 +454,17 @@ sub _logging {
 {
     package # hide from pause
         DBIx::QueryLog::Guard;
-    sub new { bless [], shift }
+    sub new {
+        my ($class, $org_is_enabled) = @_;
+        bless [$org_is_enabled], shift;
+    }
     sub DESTROY {
-        DBIx::QueryLog->disable();
+        if (shift->[0]) {
+            DBIx::QueryLog->enable();
+        }
+        else {
+            DBIx::QueryLog->disable();
+        }
     }
 }
 
@@ -585,10 +600,28 @@ Returned guard object.
 This code same as are:
 
   use DBIx::QueryLog ();
-  
+
   DBIx::QueryLog->enable;
   # ... do something
   DBIx::QueryLog->disable;
+
+=item ignore_trace
+
+Returned guard object. Disable trace in the scope.
+
+  use DBIx::QueryLog;
+
+  # enabled
+  $dbh->do(...);
+
+  {
+      my $guard = DBIx::QueryLog->ignore_trace;
+      # disable
+      $dbh->do(...);
+  }
+
+  # enabled
+  $dbh->do(...)
 
 =item is_enabled
 
