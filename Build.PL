@@ -9,7 +9,7 @@ use strict;
 use warnings;
 use utf8;
 
-use Module::Build;
+use builder::MyBuilder;
 use File::Basename;
 use File::Spec;
 use CPAN::Meta;
@@ -23,8 +23,9 @@ my %args = (
         'Module::Build' => 0.38,
     },
 
-    name        => 'DBIx-QueryLog',
-    module_name => 'DBIx::QueryLog',
+    name            => 'DBIx-QueryLog',
+    module_name     => 'DBIx::QueryLog',
+    allow_pure_perl => 0,
 
     script_files => [glob('script/*'), glob('bin/*')],
 
@@ -35,7 +36,7 @@ if (-d 'share') {
     $args{share_dir} = 'share';
 }
 
-my $builder = Module::Build->subclass(
+my $builder = builder::MyBuilder->subclass(
     class => 'MyBuilder',
     code => q{
         sub ACTION_distmeta {

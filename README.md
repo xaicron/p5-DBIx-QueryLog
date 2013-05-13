@@ -228,6 +228,12 @@ tomi-ru
 
 riywo
 
+makamaka
+
+# BUG REPORTING
+
+Plese use github issues: [https://github.com/xaicron/p5-DBIx-QueryLog/issues](https://github.com/xaicron/p5-DBIx-QueryLog/issues).
+
 # COPYRIGHT
 
 Copyright 2010 - xaicron
