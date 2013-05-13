@@ -12,4 +12,6 @@ on build => sub {
     requires 'ExtUtils::MakeMaker', '6.59';
     requires 'Test::More', '0.96';
     requires 'Test::Requires';
+    recommends 'Test::mysqld', '0.17';
+    recommends 'Test::PostgreSQL', '0.10';
 };
