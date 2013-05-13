@@ -66,7 +66,7 @@ sub setup_mysqld {
 sub setup_postgresql {
     return $POSTGRESQLD if $POSTGRESQLD;
 
-    eval { require Test::postgresql; Test::postgresql->VERSION >= 0.1 } or return;
+    eval { require Test::PostgreSQL; Test::PostgreSQL->VERSION >= 0.1 } or return;
 
     if ($ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD}) {
         $POSTGRESQLD = eval $ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD};
