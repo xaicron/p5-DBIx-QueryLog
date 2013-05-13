@@ -87,7 +87,7 @@ sub setup_postgresql {
         $dbh->do('CREATE TABLE "user" ("User" text)');
         $dbh->disconnect;
 
-        local $Data::Dumper::Trese  = 1;
+        local $Data::Dumper::Terse  = 1;
         local $Data::Dumper::Indent = 0;
         $ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD} = Dumper +$POSTGRESQLD;
     }
