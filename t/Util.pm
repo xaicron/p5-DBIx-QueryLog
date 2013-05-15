@@ -7,6 +7,7 @@ use File::Temp qw/tempfile/;
 use base 'Exporter';
 use Benchmark qw/:hireswallclock/;
 use IO::Handle;
+use Data::Dumper;
 
 our @EXPORT = qw/capture capture_logger cmpthese/;
 
@@ -16,6 +17,15 @@ BEGIN {
         next unless $key =~ /^DBIX_QUERYLOG_/;
         delete $ENV{$key};
     }
+}
+
+my $MYSQLD;
+my $POSTGRESQLD;
+
+# for prove -Pt::Util
+sub load {
+    setup_mysqld();
+    setup_postgresql();
 }
 
 sub new_dbh {
@@ -32,45 +42,40 @@ sub new_logger {
 }
 
 sub setup_mysqld {
+    return $MYSQLD if $MYSQLD;
+
     eval { require Test::mysqld; 1 } or return;
-    my $mysqld;
-    my $json = $ENV{__TEST_DBIxQueryLog};
-    my $obj;
-    if ($json) {
-        eval { require JSON; 1 } or return;
-        $obj = JSON::decode_json($json);
+
+    if ($ENV{__TEST_DBIX_QUERYLOG_MYSQLD}) {
+        $MYSQLD = eval $ENV{__TEST_DBIX_QUERYLOG_MYSQLD};
     }
 
-    if ($obj && $obj->{mysql}) {
-        $mysqld = bless $obj->{mysql}, 'Test::mysqld';
-    }
-    else {
-        $mysqld = Test::mysqld->new(my_cnf => {
+    unless ($MYSQLD) {
+        $MYSQLD = Test::mysqld->new(my_cnf => {
             'skip-networking' => '',
         }) or return;
+
+        local $Data::Dumper::Terse  = 1;
+        local $Data::Dumper::Indent = 0;
+        $ENV{__TEST_DBIX_QUERYLOG_MYSQLD} = Dumper +$MYSQLD;
     }
 
-    return $mysqld;
+    return $MYSQLD;
 }
 
 sub setup_postgresql {
+    return $POSTGRESQLD if $POSTGRESQLD;
+
     eval { require Test::PostgreSQL; Test::PostgreSQL->VERSION >= 0.1 } or return;
-    my $pg;
-    my $json = $ENV{__TEST_DBIxQueryLog};
-    my $obj;
-    if ($json) {
-        eval { require JSON; 1 } or return;
-        $obj = JSON::decode_json($json);
+
+    if ($ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD}) {
+        $POSTGRESQLD = eval $ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD};
     }
 
-    if ($obj && $obj->{pg}) {
-        use Data::Dumper; print Dumper($obj);
-        $pg = bless $obj->{pg}, 'Test::PostgreSQL';
-    }
-    else {
-        $pg = Test::PostgreSQL->new() or return;
+    unless ($POSTGRESQLD) {
+        $POSTGRESQLD = Test::PostgreSQL->new() or return;
         my $dbh = DBI->connect(
-            $pg->dsn(dbname => 'test'), '', '',
+            $POSTGRESQLD->dsn(dbname => 'test'), '', '',
             {
                 AutoCommit => 1,
                 RaiseError => 1,
@@ -81,9 +86,13 @@ sub setup_postgresql {
         # but mendo-kusai node sonnomama ni sita.
         $dbh->do('CREATE TABLE "user" ("User" text)');
         $dbh->disconnect;
+
+        local $Data::Dumper::Terse  = 1;
+        local $Data::Dumper::Indent = 0;
+        $ENV{__TEST_DBIX_QUERYLOG_POSTGRESQLD} = Dumper +$POSTGRESQLD;
     }
 
-    return $pg;
+    return $POSTGRESQLD;
 }
 
 sub capture(&) {

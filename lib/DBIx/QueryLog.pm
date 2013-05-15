@@ -709,6 +709,12 @@ tomi-ru
 
 riywo
 
+makamaka
+
+=head1 BUG REPORTING
+
+Plese use github issues: L<< https://github.com/xaicron/p5-DBIx-QueryLog/issues >>.
+
 =head1 COPYRIGHT
 
 Copyright 2010 - xaicron

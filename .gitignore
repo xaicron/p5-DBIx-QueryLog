@@ -17,3 +17,10 @@ xs/*obj
 dll*
 *~
 MYMETA.*
+/DBIx-QueryLog-*
+/.build
+/_build_params
+/Build
+!Build/
+!META.json
+!LICENSE
