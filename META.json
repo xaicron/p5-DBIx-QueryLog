@@ -79,7 +79,7 @@
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.33",
+   "version" : "0.34",
    "x_contributors" : [
       "Yuki Ibe <yibe@yibe.org>",
       "Ryuta Kamizono <kamipo@gmail.com>",

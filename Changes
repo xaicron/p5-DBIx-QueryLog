@@ -2,6 +2,9 @@ Revision history for Perl extension DBIx::QueryLog
 
 {{$NEXT}}
 
+0.34 2013-05-16T11:34:41Z
+    - Using Minilla
+
 0.33  Sat Feb 16 18:24:54 2013
     - Added ignore_trace()
 
