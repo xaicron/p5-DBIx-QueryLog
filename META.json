@@ -4,7 +4,7 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.4.2, CPAN::Meta::Converter version 2.130880",
+   "generated_by" : "Minilla/v0.4.3, CPAN::Meta::Converter version 2.130880",
    "license" : [
       "perl_5"
    ],
@@ -26,14 +26,8 @@
    },
    "prereqs" : {
       "build" : {
-         "recommends" : {
-            "Test::PostgreSQL" : "0.10",
-            "Test::mysqld" : "0.17"
-         },
          "requires" : {
-            "ExtUtils::MakeMaker" : "6.59",
-            "Test::More" : "0.96",
-            "Test::Requires" : "0"
+            "ExtUtils::MakeMaker" : "6.59"
          }
       },
       "configure" : {
@@ -64,6 +58,16 @@
             "Term::ANSIColor" : "0",
             "Time::HiRes" : "0",
             "perl" : "5.008001"
+         }
+      },
+      "test" : {
+         "recommends" : {
+            "Test::PostgreSQL" : "0.10",
+            "Test::mysqld" : "0.17"
+         },
+         "requires" : {
+            "Test::More" : "0.96",
+            "Test::Requires" : "0"
          }
       }
    },
