@@ -10,6 +10,9 @@ recommends 'Text::ASCIITable';
 
 on build => sub {
     requires 'ExtUtils::MakeMaker', '6.59';
+};
+
+on test => sub {
     requires 'Test::More', '0.96';
     requires 'Test::Requires';
     recommends 'Test::mysqld', '0.17';
