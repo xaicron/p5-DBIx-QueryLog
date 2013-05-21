@@ -51,9 +51,11 @@ sub setup_mysqld {
     }
 
     unless ($MYSQLD) {
-        $MYSQLD = Test::mysqld->new(my_cnf => {
-            'skip-networking' => '',
-        }) or return;
+        $MYSQLD = eval {
+            Test::mysqld->new(my_cnf => {
+                'skip-networking' => '',
+            });
+        } or return;
 
         local $Data::Dumper::Terse  = 1;
         local $Data::Dumper::Indent = 0;
@@ -73,7 +75,7 @@ sub setup_postgresql {
     }
 
     unless ($POSTGRESQLD) {
-        $POSTGRESQLD = Test::PostgreSQL->new() or return;
+        $POSTGRESQLD = eval { Test::PostgreSQL->new() } or return;
         my $dbh = DBI->connect(
             $POSTGRESQLD->dsn(dbname => 'test'), '', '',
             {
