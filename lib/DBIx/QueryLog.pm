@@ -22,9 +22,10 @@ my $org_db_selectrow_array    = \&DBI::db::selectrow_array;
 
 my $has_mysql = eval { require DBD::mysql; 1 } ? 1 : 0;
 my $has_pg    = eval { require DBD::Pg; 1 }    ? 1 : 0;
+my $has_sqlite = eval { require DBD::SQLite; 1 } ? 1 : 0;
 my $pp_mode   = $INC{'DBI/PurePerl.pm'} ? 1 : 0;
 
-my $supports_explain = $has_mysql && eval { require Text::ASCIITable; 1 } ? 1 : 0;
+my $supports_explain = ($has_mysql || $has_sqlite) && eval { require Text::ASCIITable; 1 } ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
@@ -256,7 +257,6 @@ sub _explain {
     my ($dbh, $ret, $params, $types) = @_;
     $types ||= [];
 
-    return if $dbh->{Driver}{Name} ne 'mysql' and $dbh->{Driver}{Name} ne 'Pg';
     return unless $ret =~ m|
         \A                     # at start of string
         (?:
@@ -275,9 +275,19 @@ sub _explain {
     no warnings qw(redefine prototype);
     local *DBI::st::execute = $org_execute; # suppress duplicate logging
 
-    my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
-    my $sth = $dbh->prepare($sql);
-    $sth->execute;
+    my $sth;
+    if ($dbh->{Driver}{Name} eq 'mysql' || $dbh->{Driver}{Name} eq 'Pg') {
+        my $sql = 'EXPLAIN ' . _bind($dbh, $ret, $params, $types);
+        $sth = $dbh->prepare($sql);
+        $sth->execute;
+    } elsif ($dbh->{Driver}{Name} eq 'SQLite') {
+        my $sql = 'EXPLAIN QUERY PLAN ' . _bind($dbh, $ret, $params, $types);
+        $sth = $dbh->prepare($sql);
+        $sth->execute;
+    } else {
+        # not supported
+        return;
+    }
 
     return sub {
         my %args = @_;
