@@ -13,19 +13,18 @@ $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
 our $VERSION = '0.35';
 
-my $org_execute               = \&DBI::st::execute;
-my $org_bind_param            = \&DBI::st::bind_param;
-my $org_db_do                 = \&DBI::db::do;
-my $org_db_selectall_arrayref = \&DBI::db::selectall_arrayref;
-my $org_db_selectrow_arrayref = \&DBI::db::selectrow_arrayref;
-my $org_db_selectrow_array    = \&DBI::db::selectrow_array;
+use constant _ORG_EXECUTE               => \&DBI::st::execute;
+use constant _ORG_BIND_PARAM            => \&DBI::st::bind_param;
+use constant _ORG_DB_DO                 => \&DBI::db::do;
+use constant _ORG_DB_SELECTALL_ARRAYREF => \&DBI::db::selectall_arrayref;
+use constant _ORG_DB_SELECTROW_ARRAYREF => \&DBI::db::selectrow_arrayref;
+use constant _ORG_DB_SELECTROW_ARRAY    => \&DBI::db::selectrow_array;
 
-my $has_mysql = eval { require DBD::mysql; 1 } ? 1 : 0;
-my $has_pg    = eval { require DBD::Pg; 1 }    ? 1 : 0;
-my $has_sqlite = eval { require DBD::SQLite; 1 } ? 1 : 0;
-my $pp_mode   = $INC{'DBI/PurePerl.pm'} ? 1 : 0;
-
-my $supports_explain = ($has_mysql || $has_sqlite) && eval { require Text::ASCIITable; 1 } ? 1 : 0;
+use constant _HAS_MYSQL        => eval { require DBD::mysql; 1  } ? 1 : 0;
+use constant _HAS_PG           => eval { require DBD::Pg; 1     } ? 1 : 0;
+use constant _HAS_SQLITE       => eval { require DBD::SQLite; 1 } ? 1 : 0;
+use constant _PP_MODE          => $INC{'DBI/PurePerl.pm'}         ? 1 : 0;
+use constant _SUPPORTS_EXPLAIN => (_HAS_MYSQL || _HAS_SQLITE) && eval { require Text::ASCIITable; 1 } ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
@@ -45,20 +44,20 @@ my $is_enabled = 0;
 sub import {
     my ($class) = @_;
 
-    $st_execute    ||= $class->_st_execute($org_execute);
-    $st_bind_param ||= $class->_st_bind_param($org_bind_param);
-    $db_do         ||= $class->_db_do($org_db_do) if $has_mysql or $has_pg;
-    unless ($pp_mode) {
-        $selectall_arrayref ||= $class->_select_array($org_db_selectall_arrayref);
-        $selectrow_arrayref ||= $class->_select_array($org_db_selectrow_arrayref);
-        $selectrow_array    ||= $class->_select_array($org_db_selectrow_array, 1);
+    $st_execute    ||= $class->_st_execute(_ORG_EXECUTE);
+    $st_bind_param ||= $class->_st_bind_param(_ORG_BIND_PARAM);
+    $db_do         ||= $class->_db_do(_ORG_DB_DO) if _HAS_MYSQL or _HAS_PG;
+    unless (_PP_MODE) {
+        $selectall_arrayref ||= $class->_select_array(_ORG_DB_SELECTALL_ARRAYREF);
+        $selectrow_arrayref ||= $class->_select_array(_ORG_DB_SELECTROW_ARRAYREF);
+        $selectrow_array    ||= $class->_select_array(_ORG_DB_SELECTROW_ARRAY, 1);
     }
 
     no warnings qw(redefine prototype);
     *DBI::st::execute    = $st_execute;
     *DBI::st::bind_param = $st_bind_param;
-    *DBI::db::do         = $db_do if $has_mysql or $has_pg;
-    unless ($pp_mode) {
+    *DBI::db::do         = $db_do if _HAS_MYSQL or _HAS_PG;
+    unless (_PP_MODE) {
         *DBI::db::selectall_arrayref = $selectall_arrayref;
         *DBI::db::selectrow_arrayref = $selectrow_arrayref;
         *DBI::db::selectrow_array    = $selectrow_array;
@@ -69,13 +68,13 @@ sub import {
 
 sub unimport {
     no warnings qw(redefine prototype);
-    *DBI::st::execute    = $org_execute;
-    *DBI::st::bind_param = $org_bind_param;
-    *DBI::db::do         = $org_db_do if $has_mysql or $has_pg;
-    unless ($pp_mode) {
-        *DBI::db::selectall_arrayref = $org_db_selectall_arrayref;
-        *DBI::db::selectrow_arrayref = $org_db_selectrow_arrayref;
-        *DBI::db::selectrow_array    = $org_db_selectrow_array;
+    *DBI::st::execute    = _ORG_EXECUTE;
+    *DBI::st::bind_param = _ORG_BIND_PARAM;
+    *DBI::db::do         = _ORG_DB_DO if _HAS_MYSQL or _HAS_PG;
+    unless (_PP_MODE) {
+        *DBI::db::selectall_arrayref = _ORG_DB_SELECTALL_ARRAYREF;
+        *DBI::db::selectrow_arrayref = _ORG_DB_SELECTROW_ARRAYREF;
+        *DBI::db::selectrow_array    = _ORG_DB_SELECTROW_ARRAY;
     }
 
     $is_enabled = 0;
@@ -139,7 +138,7 @@ sub _st_execute {
         $sth->{private_DBIx_QueryLog_params} = $dbh->{Driver}{Name} eq 'Pg' ? '' : undef;
 
         my $explain;
-        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@params, \@types);
         }
 
@@ -179,7 +178,7 @@ sub _select_array {
         my ($dbh, $stmt, $attr, @bind) = @_;
 
         no warnings qw(redefine prototype);
-        local *DBI::st::execute = $org_execute; # suppress duplicate logging
+        local *DBI::st::execute = _ORG_EXECUTE; # suppress duplicate logging
 
         my $probability = $container->{probability} || $ENV{DBIX_QUERYLOG_PROBABILITY};
         if ($probability && int(rand() * $probability) % $probability != 0) {
@@ -189,7 +188,7 @@ sub _select_array {
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
 
         my $explain;
-        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@bind);
         }
 
@@ -235,7 +234,7 @@ sub _db_do {
         my $ret = $stmt;
 
         my $explain;
-        if ($supports_explain and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@bind);
         }
 
@@ -273,7 +272,7 @@ sub _explain {
     |ixms;
 
     no warnings qw(redefine prototype);
-    local *DBI::st::execute = $org_execute; # suppress duplicate logging
+    local *DBI::st::execute = _ORG_EXECUTE; # suppress duplicate logging
 
     my $sth;
     if ($dbh->{Driver}{Name} eq 'mysql' || $dbh->{Driver}{Name} eq 'Pg') {
