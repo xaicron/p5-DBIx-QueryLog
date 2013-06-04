@@ -4,7 +4,7 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v0.4.3, CPAN::Meta::Converter version 2.130880",
+   "generated_by" : "Minilla/v0.4.6, CPAN::Meta::Converter version 2.131490",
    "license" : [
       "perl_5"
    ],
@@ -42,7 +42,7 @@
             "Test::CPAN::Meta" : "0",
             "Test::MinimumVersion" : "0.10108",
             "Test::Pod" : "1.41",
-            "Test::Spellunker" : "v0.2.2"
+            "Test::Spellunker" : "v0.2.7"
          }
       },
       "runtime" : {
@@ -83,12 +83,13 @@
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.35",
+   "version" : "0.36",
    "x_contributors" : [
       "Yuki Ibe <yibe@yibe.org>",
       "Ryuta Kamizono <kamipo@gmail.com>",
       "tokuhirom <tokuhirom@gmail.com>",
       "makamaka <makamaka.donzoko@gmail.com>",
+      "cho45 <cho45@lowreal.net>",
       "xaicron <xaicron@gmail.com>"
    ]
 }

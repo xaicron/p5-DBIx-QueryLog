@@ -80,7 +80,7 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
     __EXPERIMENTAL__
 
-    Logged Explain. (only supports mysql, PostgreSQL is incompletely supported)
+    Logged Explain.
 
     This feature requires `Text::ASCIITable` installed.
 
