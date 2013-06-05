@@ -2,6 +2,9 @@ Revision history for Perl extension DBIx::QueryLog
 
 {{$NEXT}}
 
+0.37 2013-06-05T15:04:12Z
+    - Fixed test (syohex++)
+
 0.36 2013-06-04T22:26:20Z
     - Support EXPLAIN for SQLite (cho45++)
     - Swtich lexical some variables to constant.

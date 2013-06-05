@@ -11,7 +11,7 @@ use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
 
-our $VERSION = '0.36';
+our $VERSION = '0.37';
 
 use constant _ORG_EXECUTE               => \&DBI::st::execute;
 use constant _ORG_BIND_PARAM            => \&DBI::st::bind_param;
