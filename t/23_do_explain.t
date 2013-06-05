@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::Requires qw(DBD::SQLite);
+use Test::Requires qw(DBD::SQLite Text::ASCIITable);
 use Test::More;
 use t::Util;
 use DBIx::QueryLog ();
