@@ -2,6 +2,9 @@ Revision history for Perl extension DBIx::QueryLog
 
 {{$NEXT}}
 
+0.38 2014-01-17T09:00:16Z
+    - Fixed test (makamaka++)
+
 0.37 2013-06-05T15:04:12Z
     - Fixed test (syohex++)
 

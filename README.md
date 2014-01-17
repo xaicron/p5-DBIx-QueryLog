@@ -34,7 +34,7 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
 - logger
 
-    Sets logger class (e.g. [Log::Dispach](http://search.cpan.org/perldoc?Log::Dispach))
+    Sets logger class (e.g. [Log::Dispach](https://metacpan.org/pod/Log::Dispach))
 
     Logger class must can be call \`log\` method.
 
@@ -154,7 +154,7 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
         DBIx::QueryLog->disable;
 
-    SEE ALSO [Localization](http://search.cpan.org/perldoc?Localization) section.
+    SEE ALSO [Localization](https://metacpan.org/pod/Localization) section.
 
 # TIPS
 
@@ -245,4 +245,4 @@ it under the same terms as Perl itself.
 
 # SEE ALSO
 
-[DBI](http://search.cpan.org/perldoc?DBI)
+[DBI](https://metacpan.org/pod/DBI)
