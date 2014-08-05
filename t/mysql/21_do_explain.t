@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::Requires qw(DBD::mysql Test::mysqld Text::ASCIITable);
+use Test::Requires qw(DBD::mysql Test::mysqld);
 use Test::More;
 use Test::mysqld;
 use t::Util;
