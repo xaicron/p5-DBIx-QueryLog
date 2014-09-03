@@ -1,6 +1,6 @@
 use strict;
 use warnings;
-use Test::Requires qw(DBD::Pg Test::PostgreSQL Text::ASCIITable);
+use Test::Requires qw(DBD::Pg Test::PostgreSQL);
 use Test::More;
 use Test::PostgreSQL;
 use t::Util;

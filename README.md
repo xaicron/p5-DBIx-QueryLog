@@ -82,8 +82,6 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
     Logged Explain.
 
-    This feature requires `Text::ASCIITable` installed.
-
         DBIx::QueryLog->explain(1);
         my $row = $dbh->do(...);
         # => SELECT * FROM peaple WHERE user_id = '1986'

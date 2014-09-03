@@ -7,6 +7,7 @@ use 5.008_001;
 use DBI;
 use Time::HiRes qw(gettimeofday tv_interval);
 use Term::ANSIColor qw(colored);
+use Text::ASCIITable;
 use Data::Dumper ();
 
 $ENV{ANSI_COLORS_DISABLED} = 1 if $^O eq 'MSWin32';
@@ -24,7 +25,6 @@ use constant _HAS_MYSQL        => eval { require DBD::mysql; 1  } ? 1 : 0;
 use constant _HAS_PG           => eval { require DBD::Pg; 1     } ? 1 : 0;
 use constant _HAS_SQLITE       => eval { require DBD::SQLite; 1 } ? 1 : 0;
 use constant _PP_MODE          => $INC{'DBI/PurePerl.pm'}         ? 1 : 0;
-use constant _SUPPORTS_EXPLAIN => (_HAS_MYSQL || _HAS_SQLITE) && eval { require Text::ASCIITable; 1 } ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
     'DBIx::QueryLog' => 1,
@@ -138,7 +138,7 @@ sub _st_execute {
         $sth->{private_DBIx_QueryLog_params} = $dbh->{Driver}{Name} eq 'Pg' ? '' : undef;
 
         my $explain;
-        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if ($container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@params, \@types);
         }
 
@@ -188,7 +188,7 @@ sub _select_array {
         my $ret = ref $stmt ? $stmt->{Statement} : $stmt;
 
         my $explain;
-        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if ($container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@bind);
         }
 
@@ -234,7 +234,7 @@ sub _db_do {
         my $ret = $stmt;
 
         my $explain;
-        if (_SUPPORTS_EXPLAIN and $container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
+        if ($container->{explain} || $ENV{DBIX_QUERYLOG_EXPLAIN}) {
             $explain = _explain($dbh, $ret, \@bind);
         }
 
@@ -569,8 +569,6 @@ And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 B<< EXPERIMENTAL >>
 
 Logged Explain.
-
-This feature requires C<< Text::ASCIITable >> installed.
 
   DBIx::QueryLog->explain(1);
   my $row = $dbh->do(...);
