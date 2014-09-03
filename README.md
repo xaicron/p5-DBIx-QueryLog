@@ -200,10 +200,10 @@ or you can specify code reference:
     line       : %d       # caller line
     FORMAT
 
-      printf $format,
-          @params{qw/localtime level pkg time data_source sql/},
-          join(', ', @{$params{bind_params}}),
-          @params{qw/file line/};
+        printf $format,
+            @params{qw/localtime level pkg time data_source sql/},
+            join(', ', @{$params{bind_params}}),
+            @params{qw/file line/};
 
         printf "AutoCommit?: %d\n", $params->{dbh}->{AutoCommit} ? 1 : 0;
     };
