@@ -2,6 +2,9 @@ Revision history for Perl extension DBIx::QueryLog
 
 {{$NEXT}}
 
+0.40 2015-06-22T16:14:20Z
+    - Fixed regression by DBD::SQLite 1.48
+
 0.39 2014-09-03T12:14:36Z
     - requires 'Text::ASCIITable' (kamipo++)
 
