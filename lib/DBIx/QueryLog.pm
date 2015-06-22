@@ -23,7 +23,7 @@ use constant _ORG_DB_SELECTROW_ARRAY    => \&DBI::db::selectrow_array;
 
 use constant _HAS_MYSQL        => eval { require DBD::mysql; 1  } ? 1 : 0;
 use constant _HAS_PG           => eval { require DBD::Pg; 1     } ? 1 : 0;
-use constant _HAS_SQLITE       => eval { require DBD::SQLite; 1 } ? 1 : 0;
+use constant _HAS_SQLITE       => eval { require DBD::SQLite; DBD::SQLite->VERSION(1.48); 1 } ? 1 : 0;
 use constant _PP_MODE          => $INC{'DBI/PurePerl.pm'}         ? 1 : 0;
 
 our %SKIP_PKG_MAP = (
@@ -222,7 +222,7 @@ sub _db_do {
         my $wantarray = wantarray ? 1 : 0;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
-        if ($dbh->{Driver}{Name} ne 'mysql' && $dbh->{Driver}{Name} ne 'Pg' && $dbh->{Driver}{Name} ne 'SQLite') {
+        if ($dbh->{Driver}{Name} ne 'mysql' && $dbh->{Driver}{Name} ne 'Pg' && !($dbh->{Driver}{Name} eq 'SQLite' && _HAS_SQLITE && !@bind)) {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
