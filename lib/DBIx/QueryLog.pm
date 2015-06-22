@@ -46,7 +46,7 @@ sub import {
 
     $st_execute    ||= $class->_st_execute(_ORG_EXECUTE);
     $st_bind_param ||= $class->_st_bind_param(_ORG_BIND_PARAM);
-    $db_do         ||= $class->_db_do(_ORG_DB_DO) if _HAS_MYSQL or _HAS_PG;
+    $db_do         ||= $class->_db_do(_ORG_DB_DO) if _HAS_MYSQL or _HAS_PG or _HAS_SQLITE;
     unless (_PP_MODE) {
         $selectall_arrayref ||= $class->_select_array(_ORG_DB_SELECTALL_ARRAYREF);
         $selectrow_arrayref ||= $class->_select_array(_ORG_DB_SELECTROW_ARRAYREF);
@@ -56,7 +56,7 @@ sub import {
     no warnings qw(redefine prototype);
     *DBI::st::execute    = $st_execute;
     *DBI::st::bind_param = $st_bind_param;
-    *DBI::db::do         = $db_do if _HAS_MYSQL or _HAS_PG;
+    *DBI::db::do         = $db_do if _HAS_MYSQL or _HAS_PG or _HAS_SQLITE;
     unless (_PP_MODE) {
         *DBI::db::selectall_arrayref = $selectall_arrayref;
         *DBI::db::selectrow_arrayref = $selectrow_arrayref;
@@ -70,7 +70,7 @@ sub unimport {
     no warnings qw(redefine prototype);
     *DBI::st::execute    = _ORG_EXECUTE;
     *DBI::st::bind_param = _ORG_BIND_PARAM;
-    *DBI::db::do         = _ORG_DB_DO if _HAS_MYSQL or _HAS_PG;
+    *DBI::db::do         = _ORG_DB_DO if _HAS_MYSQL or _HAS_PG or _HAS_SQLITE;
     unless (_PP_MODE) {
         *DBI::db::selectall_arrayref = _ORG_DB_SELECTALL_ARRAYREF;
         *DBI::db::selectrow_arrayref = _ORG_DB_SELECTROW_ARRAYREF;
@@ -222,7 +222,7 @@ sub _db_do {
         my $wantarray = wantarray ? 1 : 0;
         my ($dbh, $stmt, $attr, @bind) = @_;
 
-        if ($dbh->{Driver}{Name} ne 'mysql' && $dbh->{Driver}{Name} ne 'Pg') {
+        if ($dbh->{Driver}{Name} ne 'mysql' && $dbh->{Driver}{Name} ne 'Pg' && $dbh->{Driver}{Name} ne 'SQLite') {
             return $org->($dbh, $stmt, $attr, @bind);
         }
 
