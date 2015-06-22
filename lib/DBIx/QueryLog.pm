@@ -496,9 +496,9 @@ DBIx::QueryLog - Logging queries for DBI
 
 =head1 DESCRIPTION
 
-DBIx::QueryLog is logs each execution time and the actual query.
+DBIx::QueryLog logs each execution time and the actual query.
 
-Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
+Currently, it works with DBD::mysql, DBD::Pg and DBD::SQLite.
 
 =head1 CLASS METHODS
 
@@ -506,69 +506,69 @@ Currently, works on DBD::mysql, DBD::Pg and DBD::sqlite.
 
 =item threshold
 
-Logged if exceeding this value. (default not set)
+If set, only queries that take more time than this threshold will be logged (default is undef)
 
   DBIx::QueryLog->threshold(0.1); # sec
 
-And, you can also specify C<< DBIX_QUERYLOG_THRESHOLD >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_THRESHOLD >> environment variable.
 
 =item probability
 
-Run only once per defined value. (default not set)
+If set, the logger logs only once per a defined value. (default is undef)
 
   DBIx::QueryLog->probability(100); # about 1/100
 
-And, you can also specify C<< DBIX_QUERYLOG_PROBABILITY >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_PROBABILITY >> environment variable.
 
 =item logger
 
-Sets logger class (e.g. L<Log::Dispach>)
+Sets a logger class (e.g. L<Log::Dispach>)
 
-Logger class must can be call `log` method.
+The logger class must have a `log` method, which should work like the one of L<Log::Dispatch> (but see also OUTPUT section below).
 
   DBIx::QueryLog->logger($logger);
 
 =item skip_bind
 
-If enabled, will be faster, but SQL is not bound.
+If set, DBIx::QueryLog runs faster, but placeholders are not processed.
 
   DBIx::QueryLog->skip_bind(1);
   my $row = $dbh->do(...);
   # => 'SELECT * FROM people WHERE user_id = ?' : [1986]
 
-And, you can also specify C<< DBIX_QUERYLOG_SKIP_BIND >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_SKIP_BIND >> environment variable.
 
 =item color
 
-If you want to colored SQL output are:
+If set, log messages will be colored with L<Term::ANSIColor>.
 
   DBIx::QueryLog->color('green');
 
-And, you can also specify C<< DBIX_QUERYLOG_COLOR >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_COLOR >> environment variable.
 
 =item useqq
 
-using C<< $Data::Dumper::Useqq >>.
+If set, DBIx::QueryLog uses C<< $Data::Dumper::Useqq >>.
 
   DBIx::QueryLog->useqq(1);
 
-And, you can also specify C<< DBIX_QUERYLOG_USEQQ >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_USEQQ >> environment variable.
 
 =item compact
 
-Compaction SQL.
+If set, log messages will be compact.
 
   DBIx::QueryLog->compact(1);
   #  FROM: SELECT          *  FROM      foo WHERE bar = 'baz'
   #  TO  : SELECT * FROM foo WHERE bar = 'baz'
 
-And, you can also specify C<< DBIX_QUERYLOG_COMPACT >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_COMPACT >> environment variable.
 
 =item explain
 
 B<< EXPERIMENTAL >>
 
-Logged Explain.
+If set, DBIx::QueryLog logs the result of a C<< EXPLAIN >> statement.
 
   DBIx::QueryLog->explain(1);
   my $row = $dbh->do(...);
@@ -579,11 +579,11 @@ Logged Explain.
   #  |  1 | SIMPLE      | peaple | const | PRIMARY       | PRIMARY |       4 | const |    1 |       |
   #  '----+-------------+--------+-------+---------------+---------+---------+-------+------+-------'
 
-And, you can also specify C<< DBIX_QUERYLOG_EXPLAIN >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_EXPLAIN >> environment variable.
 
 =item show_data_source
 
-if enabled, added DBI data_source in default message.
+if set, DBI data_source will be added to the log messages.
 
   $dbh->do('SELECT * FROM sqlite_master');
   # [2012-03-09T00:58:23] [main] [0.000953] SELECT * FROM sqlite_master at foo.pl line 34
@@ -592,11 +592,11 @@ if enabled, added DBI data_source in default message.
   $dbh->do('SELECT * FROM sqlite_master');
   # [2012-03-09T00:58:23] [main] [0.000953] [SQLite:dbname=/tmp/TrSATdY3cc] SELECT * FROM sqlite_master at foo.pl line 56
 
-And, you can also specify C<< DBIX_QUERYLOG_SHOW_DATASOURCE >> environment variable.
+You can also specify this with C<< DBIX_QUERYLOG_SHOW_DATASOURCE >> environment variable.
 
 =item guard
 
-Returned guard object.
+Returns a guard object.
 
   use DBIx::QueryLog ();
   {
@@ -604,7 +604,7 @@ Returned guard object.
       # ... do something
   }
 
-This code same as are:
+The following code does the same:
 
   use DBIx::QueryLog ();
 
@@ -614,7 +614,7 @@ This code same as are:
 
 =item ignore_trace
 
-Returned guard object. Disable trace in the scope.
+Returns a guard object and disables tracing while the object is alive.
 
   use DBIx::QueryLog;
 
@@ -632,7 +632,7 @@ Returned guard object. Disable trace in the scope.
 
 =item is_enabled
 
-Return true or false
+Returns if DBIx::QueryLog is enabled or not.
 
   use DBIx::QueryLog ();
 
@@ -640,7 +640,7 @@ Return true or false
 
   DBIx::QueryLog->disable;
 
-SEE ALSO L<< Localization >> section.
+See also L<< Localization >> section.
 
 =back
 
@@ -648,7 +648,7 @@ SEE ALSO L<< Localization >> section.
 
 =head2 Localization
 
-If you want to localize the scope are:
+If you want to log only in a specific scope:
 
   use DBIx::QueryLog (); # or require DBIx::QueryLog;
 
@@ -656,24 +656,22 @@ If you want to localize the scope are:
   my $row = $dbh->do(...);
   DBIx::QueryLog->end;   # or DBIx::QueryLog->disable
 
-Now you could enable logging between C<< begin >> and C<< end >>.
+DBIx::QueryLog logs only between C<< begin >> and C<< end >>.
 
 =head2 LOG_LEVEL
 
-If you set C<< logger >>, it might want to change the logging level.
-
-It can be modified as follows:
+When you set a C<< logger >>, you might also want to change a log level.
 
   $DBIx::QueryLog::LOG_LEVEL = 'info'; # default 'debug'
 
 =head2 OUTPUT
 
-If you want to change of output are:
+If you want to change where to output:
 
   open my $fh, '>', 'dbix_query.log';
   $DBIx::QueryLog::OUTPUT = $fh;
 
-or you can specify code reference:
+You can also specify a code reference:
 
   $DBIx::QueryLog::OUTPUT = sub {
       my %params = @_;
@@ -697,6 +695,16 @@ or you can specify code reference:
 
       printf "AutoCommit?: %d\n", $params->{dbh}->{AutoCommit} ? 1 : 0;
   };
+
+You can also use this if you want to use a logger that doesn't have a C<< log >> method like the one of L<<Log::Dispatch>>.
+
+  $DBIx::QueryLog::OUTPUT = sub {
+      my %params = @_;
+      my $logger = Log::Any->get_logger;
+      $logger->debug("$params{message}");
+  };
+
+Note that this only works when C<<logger>> is not set.
 
 Default C<< $OUTPUT >> is C<< STDERR >>.
 
