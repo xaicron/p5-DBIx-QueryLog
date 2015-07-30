@@ -67,6 +67,16 @@ subtest output => sub {
     ok exists $params{explain}, 'explain is exists';
 };
 
+subtest 'statement error' => sub {
+    my %params;
+    local $DBIx::QueryLog::OUTPUT = sub { %params = @_ };
+    local $dbh->{PrintError} = 0;
+
+    eval { $dbh->do('HOGE FUGA') };
+    ok $DBI::err, 'throw error';
+    ok !exists $params{explain}, 'explain is not exists';
+};
+
 DBIx::QueryLog->explain(0);
 
 unless ($ENV{DBIX_QUERYLOG_EXPLAIN}) {

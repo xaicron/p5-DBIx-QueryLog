@@ -288,6 +288,7 @@ sub _explain {
         return;
     }
 
+    return if $DBI::err; # skip if maybe statement error
     return sub {
         my %args = @_;
 
