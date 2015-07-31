@@ -2,6 +2,9 @@ Revision history for Perl extension DBIx::QueryLog
 
 {{$NEXT}}
 
+0.41 2015-07-31T08:19:07Z
+    - Fixed exception when using EXPLAIN if statement error.
+
 0.40 2015-06-22T16:14:20Z
     - Fixed regression by DBD::SQLite 1.48
 
