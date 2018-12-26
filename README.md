@@ -34,7 +34,7 @@ Currently, it works with DBD::mysql, DBD::Pg and DBD::SQLite.
 
 - logger
 
-    Sets a logger class (e.g. [Log::Dispach](https://metacpan.org/pod/Log::Dispach))
+    Sets a logger class (e.g. [Log::Dispatch](https://metacpan.org/pod/Log::Dispatch))
 
     The logger class must have a \`log\` method, which should work like the one of [Log::Dispatch](https://metacpan.org/pod/Log::Dispatch) (but see also OUTPUT section below).
 
