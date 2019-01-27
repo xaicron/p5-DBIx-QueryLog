@@ -1,3 +1,4 @@
+[![Build Status](https://travis-ci.com/xaicron/p5-DBIx-QueryLog.svg?branch=master)](https://travis-ci.com/xaicron/p5-DBIx-QueryLog)
 # NAME
 
 DBIx::QueryLog - Logging queries for DBI
@@ -34,7 +35,7 @@ Currently, it works with DBD::mysql, DBD::Pg and DBD::SQLite.
 
 - logger
 
-    Sets a logger class (e.g. [Log::Dispatch](https://metacpan.org/pod/Log::Dispatch))
+    Sets a logger class (e.g. [Log::Dispach](https://metacpan.org/pod/Log::Dispach))
 
     The logger class must have a \`log\` method, which should work like the one of [Log::Dispatch](https://metacpan.org/pod/Log::Dispatch) (but see also OUTPUT section below).
 
@@ -220,7 +221,7 @@ Default `$OUTPUT` is `STDERR`.
 
 # AUTHOR
 
-xaicron <xaicron {at} cpan.org>
+xaicron &lt;xaicron {at} cpan.org>
 
 # THANKS TO
 

@@ -24,3 +24,4 @@ MYMETA.*
 !Build/
 !META.json
 !LICENSE
+/Build.bat

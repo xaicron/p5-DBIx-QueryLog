@@ -4,13 +4,13 @@
       "xaicron <xaicron {at} cpan.org>"
    ],
    "dynamic_config" : 0,
-   "generated_by" : "Minilla/v2.5.0, CPAN::Meta::Converter version 2.150005",
+   "generated_by" : "Minilla/v3.1.4, CPAN::Meta::Converter version 2.150010",
    "license" : [
       "perl_5"
    ],
    "meta-spec" : {
       "url" : "http://search.cpan.org/perldoc?CPAN::Meta::Spec",
-      "version" : "2"
+      "version" : 2
    },
    "name" : "DBIx-QueryLog",
    "no_index" : {
@@ -33,7 +33,7 @@
       },
       "configure" : {
          "requires" : {
-            "Module::Build" : "0.38"
+            "Module::Build::Tiny" : "0.035"
          }
       },
       "develop" : {
@@ -84,15 +84,18 @@
       }
    },
    "version" : "0.41",
+   "x_authority" : "cpan:XAICRON",
    "x_contributors" : [
-      "Yuki Ibe <yibe@yibe.org>",
-      "tokuhirom <tokuhirom@gmail.com>",
-      "cho45 <cho45@lowreal.net>",
-      "Syohei YOSHIDA <syohex@gmail.com>",
-      "makamaka <makamaka.donzoko@gmail.com>",
-      "Ryuta Kamizono <kamipo@gmail.com>",
       "Kenichi Ishigaki <ishigaki@cpan.org>",
-      "xaicron <xaicron@gmail.com>"
+      "Ryuta Kamizono <kamipo@gmail.com>",
+      "Syohei YOSHIDA <syohex@gmail.com>",
+      "Yuji Shimada <xaicron@gmail.com>",
+      "Yuki Ibe <yibe@yibe.org>",
+      "cho45 <cho45@lowreal.net>",
+      "fadlil <lord_nesh2004@yahoo.com>",
+      "makamaka <makamaka.donzoko@gmail.com>",
+      "tokuhirom <tokuhirom@gmail.com>"
    ],
-   "x_serialization_backend" : "JSON::PP version 2.27300"
+   "x_serialization_backend" : "JSON::PP version 4.00",
+   "x_static_install" : 1
 }
