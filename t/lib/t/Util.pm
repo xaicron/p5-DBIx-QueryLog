@@ -22,7 +22,7 @@ BEGIN {
 my $MYSQLD;
 my $POSTGRESQLD;
 
-# for prove -Pt::Util
+# for prove -PUtil
 sub load {
     setup_mysqld();
     setup_postgresql();
