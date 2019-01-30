@@ -89,12 +89,12 @@
       "Kenichi Ishigaki <ishigaki@cpan.org>",
       "Ryuta Kamizono <kamipo@gmail.com>",
       "Syohei YOSHIDA <syohex@gmail.com>",
-      "Yuji Shimada <xaicron@gmail.com>",
       "Yuki Ibe <yibe@yibe.org>",
       "cho45 <cho45@lowreal.net>",
       "fadlil <lord_nesh2004@yahoo.com>",
       "makamaka <makamaka.donzoko@gmail.com>",
-      "tokuhirom <tokuhirom@gmail.com>"
+      "tokuhirom <tokuhirom@gmail.com>",
+      "xaicron <xaicron@gmail.com>"
    ],
    "x_serialization_backend" : "JSON::PP version 4.00",
    "x_static_install" : 1
