@@ -357,7 +357,10 @@ sub _logging {
     my $sql = $ret;
     if ($container->{skip_bind} || $ENV{DBIX_QUERYLOG_SKIP_BIND}) {
         local $" = ', ';
-        $ret .= " : [@$bind_params]" if @$bind_params;
+        if (@$bind_params) {
+            my @bind_data = map { defined $_ ? $_ : 'NULL' } @$bind_params;
+            $ret .= " : [@bind_data]";
+        }
     }
 
     if ($container->{compact} || $ENV{DBIX_QUERYLOG_COMPACT}) {
