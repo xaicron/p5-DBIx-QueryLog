@@ -83,7 +83,7 @@
          "web" : "https://github.com/xaicron/p5-DBIx-QueryLog"
       }
    },
-   "version" : "0.41",
+   "version" : "0.42",
    "x_authority" : "cpan:XAICRON",
    "x_contributors" : [
       "Kenichi Ishigaki <ishigaki@cpan.org>",
@@ -93,6 +93,7 @@
       "cho45 <cho45@lowreal.net>",
       "fadlil <lord_nesh2004@yahoo.com>",
       "makamaka <makamaka.donzoko@gmail.com>",
+      "narita <narita.cpp@gmail.com>",
       "tokuhirom <tokuhirom@gmail.com>",
       "xaicron <xaicron@gmail.com>"
    ],
