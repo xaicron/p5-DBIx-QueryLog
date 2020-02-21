@@ -684,7 +684,7 @@ You can also specify a code reference:
   localtime  : %s       # ISO-8601 without timezone
   level      : %s       # log level ($DBIx::QueryLog::LOG_LEVEL)
   time       : %f       # elasped time
-  data_source: $s       # data_source
+  data_source: %s       # data_source
   sql        : %s       # executed query
   bind_params: %s       # bind parameters
   pkg        : %s       # caller package
@@ -693,11 +693,11 @@ You can also specify a code reference:
   FORMAT
 
       printf $format,
-          @params{qw/localtime level pkg time data_source sql/},
+          @params{qw/localtime level time data_source sql/},
           join(', ', @{$params{bind_params}}),
-          @params{qw/file line/};
+          @params{qw/pkg file line/};
 
-      printf "AutoCommit?: %d\n", $params->{dbh}->{AutoCommit} ? 1 : 0;
+      printf "AutoCommit?: %d\n", $params{dbh}->{AutoCommit} ? 1 : 0;
   };
 
 You can also use this if you want to use a logger that doesn't have a C<< log >> method like the one of L<<Log::Dispatch>>.
